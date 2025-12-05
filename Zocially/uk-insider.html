@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The UK Insider | Zocially</title>
+    <meta name="description" content="Check your UK ILR eligibility with our free tool.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // https://dashboard.emailjs.com/admin/account
+            emailjs.init('rY0pplKAL52RfMgLC');
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="uk-insider.html" class="active">The UK Insider</a></li>
+                    <li><a href="marketplace.html">Marketplace</a></li>
+                    <li><a href="finder.html">Deal Finder</a></li>
+                    <li><a href="index.html#contact" class="btn-primary">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- The UK Insider Section -->
+        <section id="uk-insider" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>The UK <span class="gradient-text">Insider</span></h2>
+                    <p>Exclusive tools, updates, and opportunities for your life in the UK.</p>
+                </div>
+                <div class="hub-grid">
+                    <!-- ILR Checker Card -->
+                    <a href="ilr-checker.html" class="hub-card glass-card">
+                        <div class="hub-icon">🇬🇧</div>
+                        <h3>UK Settlement Checker</h3>
+                        <p>Discover your earliest eligibility date for Indefinite Leave to Remain (ILR).</p>
+                        <span class="btn-secondary">Check Eligibility →</span>
+                    </a>
+
+                    <!-- Sponsor Checker Card -->
+                    <a href="sponsor-checker.html" class="hub-card glass-card">
+                        <div class="hub-icon">🏢</div>
+                        <h3>Sponsor Licence Checker</h3>
+                        <p>Verify if a company is licensed to sponsor workers in the UK.</p>
+                        <span class="btn-secondary">Search Register →</span>
+                    </a>
+
+                    <!-- Job Hunter Card -->
+                    <a href="job-hunter.html" class="hub-card glass-card">
+                        <div class="hub-icon">🚀</div>
+                        <h3>Job Hunter AI</h3>
+                        <p>Tailor your CV and generate cover letters automatically with AI.</p>
+                        <span class="btn-secondary">Launch Tool →</span>
+                    </a>
+
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <p>&copy; 2025 Zocially. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="debug-console"
+        style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: lime; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; z-index: 9999; max-width: 300px; max-height: 200px; overflow-y: auto; pointer-events: none;">
+        Debug Log...</div>
+    <script src="script.js?v=3"></script>
+</body>
+
+</html>

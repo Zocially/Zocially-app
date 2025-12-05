@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Finder | Zocially</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .finder-hero {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1.5rem;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            font-size: 1.2rem;
+            outline: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+        }
+
+        .smart-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .smart-link-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            width: 150px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+        }
+
+        .smart-link-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .smart-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .alert-section {
+            max-width: 600px;
+            margin: 4rem auto;
+            padding: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="uk-insider.html">The UK Insider</a></li>
+                    <li><a href="marketplace.html">Marketplace</a></li>
+                    <li><a href="finder.html" class="active">Deal Finder</a></li>
+                    <li><a href="index.html#contact" class="btn-primary">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="finder-hero">
+            <div class="container">
+                <h1>Find the <span class="gradient-text">Lowest Price</span></h1>
+                <p class="subtitle">Search once, check everywhere. Can't find it? Set an alert!</p>
+
+                <div class="search-container">
+                    <input type="text" id="finder-input" class="search-input"
+                        placeholder="e.g. Cricket Shoes Size 10 UK...">
+                    <button onclick="performSmartSearch()" class="btn-primary search-btn">Find Deals</button>
+                </div>
+
+                <div id="smart-results" style="display: none;">
+                    <div class="smart-links">
+                        <a id="link-google" href="#" target="_blank" class="smart-link-card">
+                            <span class="smart-icon">🔍</span>
+                            <strong>Google Shopping</strong>
+                            <small>Low to High</small>
+                        </a>
+                        <a id="link-ebay" href="#" target="_blank" class="smart-link-card">
+                            <span class="smart-icon">🛍️</span>
+                            <strong>eBay</strong>
+                            <small>Buy Now + Cheapest</small>
+                        </a>
+                        <a id="link-amazon" href="#" target="_blank" class="smart-link-card">
+                            <span class="smart-icon">📦</span>
+                            <strong>Amazon</strong>
+                            <small>Search Results</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="deals-section section">
+            <div class="container">
+                <div class="section-header text-center">
+                    <h2>Latest <span class="gradient-text">Deals</span></h2>
+                    <p>Handpicked offers just for you.</p>
+                </div>
+
+                <div class="deals-grid" id="finder-deals-container">
+                    <!-- Deals injected by JS -->
+                    <div class="placeholder-text">Loading deals...</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <p>&copy; 2025 Zocially. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <span class="close-modal">&times;</span>
+            <h3>Place Order</h3>
+            <p id="modal-service-name">Service Name</p>
+            <form id="order-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" min="1" value="1" required style="width: 100px;">
+                </div>
+                <div class="form-group">
+                    <label for="details">Order Details</label>
+                    <textarea id="details" rows="3" placeholder="Additional requirements..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary full-width">Confirm Order</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function performSmartSearch() {
+            const query = document.getElementById('finder-input').value.trim();
+            if (!query) return;
+
+            // Encode query
+            const q = encodeURIComponent(query);
+
+            // Google Shopping: tbm=shop, tbs=p_ord:p (Sort by Price Low to High)
+            document.getElementById('link-google').href = `https://www.google.com/search?q=${q}&tbm=shop&tbs=p_ord:p`;
+
+            // eBay: _sop=15 (Price + Shipping: Lowest First), LH_BIN=1 (Buy It Now)
+            document.getElementById('link-ebay').href = `https://www.ebay.co.uk/sch/i.html?_nkw=${q}&_sop=15&LH_BIN=1`;
+
+            // Amazon
+            document.getElementById('link-amazon').href = `https://www.amazon.co.uk/s?k=${q}&s=price-asc-rank`;
+
+            // Show results
+            document.getElementById('smart-results').style.display = 'block';
+
+            // Pre-fill alert form
+            document.getElementById('alert-item').value = query;
+        }
+
+        // Handle Enter Key
+        document.getElementById('finder-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') performSmartSearch();
+        });
+
+        // Handle Alert Form
+        document.getElementById('alert-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const alertData = {
+                item_name: document.getElementById('alert-item').value,
+                target_price: document.getElementById('alert-price').value,
+                email: document.getElementById('alert-email').value
+            };
+
+            try {
+                const { error } = await supabase
+                    .from('price_alerts')
+                    .insert([alertData]);
+
+                if (error) throw error;
+
+                alert("Price Alert Set! We'll email you when we find a deal.");
+                document.getElementById('alert-form').reset();
+            } catch (err) {
+                alert("Error setting alert: " + err.message);
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+
+</html>

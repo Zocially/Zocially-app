@@ -1,0 +1,26 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Secrets
+credentials.json
+token.pickle
+client_secret.json
+
+# OS
+.DS_Store
+
+# User Specific
+usage.db
+*.pdf
+*.docx

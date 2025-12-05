@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zocially | Premium Deals & Services</title>
+    <meta name="description" content="Discover the best deals and premium digital services on Zocially.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // https://dashboard.emailjs.com/admin/account
+            emailjs.init('rY0pplKAL52RfMgLC');
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="uk-insider.html">The UK Insider</a></li>
+                    <li><a href="marketplace.html">Marketplace</a></li>
+                    <li><a href="finder.html">Deal Finder</a></li>
+                    <li><a href="#contact" class="btn-primary">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1>Unlock Premium <span class="gradient-text">Value</span></h1>
+                <p class="subtitle">Curated deals and top-tier digital services, all in one place.</p>
+                <div class="hero-btns">
+                    <a href="#deals" class="btn-secondary">Browse Deals</a>
+                    <a href="#services" class="btn-primary">Explore Services</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Deals Section -->
+        <section id="deals" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Exclusive <span class="gradient-text">Deals</span></h2>
+                    <p>Hand-picked offers just for you.</p>
+                </div>
+                <div class="deals-grid" id="deals-container">
+                    <!-- Deals will be injected here by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section (PrabaTech Inspired) -->
+        <section id="services" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Social Media <span class="gradient-text">Marketing</span></h2>
+                    <p>Boost your presence with our premium SMM solutions.</p>
+                </div>
+                <div class="services-grid" id="services-container">
+                    <!-- Services will be injected here by JS -->
+                </div>
+                <div class="custom-order-note glass-card">
+                    <p>✨ <strong>Need a Custom Package?</strong> We accept custom orders for unique requests! <a
+                            href="#contact" class="text-link">Contact us</a> for a quote.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Get in <span class="gradient-text">Touch</span></h2>
+                    <p>Have questions? We're here to help.</p>
+                </div>
+                <div class="glass-card contact-card">
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <label for="contact-name">Name</label>
+                            <input type="text" id="contact-name" required placeholder="Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-email">Email</label>
+                            <input type="email" id="contact-email" required placeholder="you@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-message">Message</label>
+                            <textarea id="contact-message" rows="4" required
+                                placeholder="How can we help you?"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary full-width">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <p>&copy; 2025 Zocially. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <span class="close-modal">&times;</span>
+            <h3>Place Order</h3>
+            <p id="modal-service-name">Service Name</p>
+            <form id="order-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" min="1" value="1" required style="width: 100px;">
+                </div>
+                <div class="form-group">
+                    <label for="details">Order Details</label>
+                    <textarea id="details" rows="3" placeholder="Additional requirements..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary full-width">Confirm Order</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

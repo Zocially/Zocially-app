@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILR Eligibility Checker | The UK Insider</title>
+    <meta name="description" content="Check your UK ILR eligibility with our free tool.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // https://dashboard.emailjs.com/admin/account
+            emailjs.init('rY0pplKAL52RfMgLC');
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="uk-insider.html" class="active">The UK Insider</a></li>
+                    <li><a href="marketplace.html">Marketplace</a></li>
+                    <li><a href="finder.html">Deal Finder</a></li>
+                    <li><a href="index.html#contact" class="btn-primary">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <a href="uk-insider.html" class="back-link">← Back to Hub</a>
+                    <h2>UK Settlement <span class="gradient-text">Checker</span></h2>
+                    <p>Discover your earliest eligibility date for Indefinite Leave to Remain (ILR).</p>
+                </div>
+                <div id="ilr-wizard-container" class="wizard-container">
+                    <div class="wizard-card glass-card">
+                        <!-- Progress -->
+                        <div class="wizard-progress-track">
+                            <div class="wizard-progress-fill" id="wizard-progress"></div>
+                        </div>
+
+                        <!-- Step Content Area -->
+                        <div id="wizard-steps">
+                            <!-- Step 0: Welcome -->
+                            <div class="wizard-step active" data-step="0">
+                                <div class="step-icon">🇬🇧</div>
+                                <h3>UK Settlement Checker</h3>
+                                <p class="step-desc">Discover your earliest eligibility date for Indefinite Leave to
+                                    Remain (ILR).</p>
+
+                                <div class="input-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="inp-name" placeholder="e.g. John Doe">
+                                </div>
+                                <div class="input-group">
+                                    <label>Email Address</label>
+                                    <input type="email" id="inp-email" placeholder="name@example.com">
+                                </div>
+                                <p class="privacy-note"><small>🔒 Your data is secure. Results are emailed to
+                                        you.</small></p>
+                            </div>
+
+                            <!-- Step 1: Visa Type -->
+                            <div class="wizard-step" data-step="1">
+                                <h3>Current Visa Status</h3>
+                                <p class="step-desc">Select your current visa or immigration route.</p>
+                                <div class="options-grid">
+                                    <button class="option-tile" data-value="standard"
+                                        onclick="selectOption('visaType', 'standard')">
+                                        <span class="opt-icon">💼</span>
+                                        <span class="opt-label">Skilled Worker</span>
+                                    </button>
+                                    <button class="option-tile" data-value="dependent"
+                                        onclick="selectOption('visaType', 'dependent')">
+                                        <span class="opt-icon">👨‍👩‍👧</span>
+                                        <span class="opt-label">Dependent</span>
+                                    </button>
+                                    <button class="option-tile" data-value="global_talent"
+                                        onclick="selectOption('visaType', 'global_talent')">
+                                        <span class="opt-icon">🌟</span>
+                                        <span class="opt-label">Global Talent</span>
+                                    </button>
+                                    <button class="option-tile" data-value="family"
+                                        onclick="selectOption('visaType', 'family')">
+                                        <span class="opt-icon">🏠</span>
+                                        <span class="opt-label">Family Visa</span>
+                                    </button>
+                                    <button class="option-tile" data-value="bno"
+                                        onclick="selectOption('visaType', 'bno')">
+                                        <span class="opt-icon">🛂</span>
+                                        <span class="opt-label">BNO</span>
+                                    </button>
+                                    <button class="option-tile" data-value="refugee"
+                                        onclick="selectOption('visaType', 'refugee')">
+                                        <span class="opt-icon">🕊️</span>
+                                        <span class="opt-label">Refugee</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="inp-visaType">
+                            </div>
+
+                            <!-- Step 2: Entry Date -->
+                            <div class="wizard-step" data-step="2">
+                                <h3>UK Entry Date</h3>
+                                <p class="step-desc">When did you first enter the UK on this visa route?</p>
+                                <div class="date-input-wrapper">
+                                    <input type="date" id="inp-entryDate" class="large-date-input">
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Income & Contribution -->
+                            <div class="wizard-step" data-step="3">
+                                <h3>Contribution & Income</h3>
+                                <p class="step-desc">Higher income or public service can accelerate your route.</p>
+
+                                <label class="sub-label">Annual Income Level</label>
+                                <div class="options-row">
+                                    <button class="option-pill" data-value="standard"
+                                        onclick="selectOption('incomeLevel', 'standard')">Standard (<£50k)< /button>
+                                            <button class="option-pill" data-value="mid"
+                                                onclick="selectOption('incomeLevel', 'mid')">High (>£50k)</button>
+                                            <button class="option-pill" data-value="high"
+                                                onclick="selectOption('incomeLevel', 'high')">Very High
+                                                (>£125k)</button>
+                                </div>
+                                <input type="hidden" id="inp-incomeLevel">
+
+                                <div class="toggle-row">
+                                    <span>Public Service Occupation?</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="inp-publicService">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <div class="toggle-row">
+                                    <span>Active Community Volunteer?</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="inp-volunteering">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Integration (English) -->
+                            <div class="wizard-step" data-step="4">
+                                <h3>English Proficiency</h3>
+                                <p class="step-desc">Advanced English skills demonstrate better integration.</p>
+                                <div class="options-grid col-3">
+                                    <button class="option-tile" data-value="b1"
+                                        onclick="selectOption('englishLevel', 'b1')">
+                                        <span class="opt-label">B1</span>
+                                        <small>Standard</small>
+                                    </button>
+                                    <button class="option-tile" data-value="b2"
+                                        onclick="selectOption('englishLevel', 'b2')">
+                                        <span class="opt-label">B2</span>
+                                        <small>Intermediate</small>
+                                    </button>
+                                    <button class="option-tile" data-value="c1"
+                                        onclick="selectOption('englishLevel', 'c1')">
+                                        <span class="opt-label">C1</span>
+                                        <small>Advanced</small>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="inp-englishLevel">
+                            </div>
+
+                            <!-- Step 5: History -->
+                            <div class="wizard-step" data-step="5">
+                                <h3>Immigration History</h3>
+                                <p class="step-desc">Please declare any public funds usage or breaches.</p>
+
+                                <label class="sub-label">Public Funds Claimed?</label>
+                                <div class="options-row">
+                                    <button class="option-pill" data-value="none"
+                                        onclick="selectOption('publicFunds', 'none')">None</button>
+                                    <button class="option-pill" data-value="low"
+                                        onclick="selectOption('publicFunds', 'low')">
+                                        < 12 Months</button>
+                                            <button class="option-pill" data-value="high"
+                                                onclick="selectOption('publicFunds', 'high')">> 12 Months</button>
+                                </div>
+                                <input type="hidden" id="inp-publicFunds">
+
+                                <div class="toggle-row warning-bg">
+                                    <span>Any Immigration Breaches?</span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="inp-immigrationBreach">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Step 6: Results -->
+                            <div class="wizard-step" data-step="6">
+                                <div class="result-header">
+                                    <span class="confetti-icon">🎉</span>
+                                    <h3>Your ILR Forecast</h3>
+                                </div>
+
+                                <div class="result-card">
+                                    <div class="result-main">
+                                        <span class="label">Earliest Eligibility</span>
+                                        <h2 id="out-date">...</h2>
+                                    </div>
+                                    <div class="result-stats">
+                                        <div class="stat">
+                                            <span class="val" id="out-years">...</span>
+                                            <span class="lbl">Total Years</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="val" id="out-baseline">...</span>
+                                            <span class="lbl">Baseline</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="out-breakdown" class="breakdown-list"></div>
+
+                                <button class="btn-secondary full-width" onclick="window.location.reload()">Start
+                                    Over</button>
+                            </div>
+                        </div>
+
+                        <!-- Navigation -->
+                        <div class="wizard-footer">
+                            <button id="wiz-back" class="btn-secondary hidden">Back</button>
+                            <button id="wiz-next" class="btn-primary">Start Checker</button>
+                        </div>
+                    </div>
+
+                    <!-- Disclaimer -->
+                    <div class="wizard-disclaimer">
+                        <p><strong>Important Notice:</strong> This tool is based on the Home Office consultation paper
+                            “A Fairer Pathway to Settlement” (2025). It is for indicative purposes only and does not
+                            constitute legal advice.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <p>&copy; 2025 Zocially. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js?v=3"></script>
+</body>
+
+</html>

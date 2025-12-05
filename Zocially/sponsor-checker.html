@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sponsor Licence Checker | The UK Insider</title>
+    <meta name="description" content="Verify if a company is a licensed UK sponsor.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // https://dashboard.emailjs.com/admin/account
+            emailjs.init('rY0pplKAL52RfMgLC');
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="uk-insider.html" class="active">The UK Insider</a></li>
+                    <li><a href="marketplace.html">Marketplace</a></li>
+                    <li><a href="finder.html">Deal Finder</a></li>
+                    <li><a href="index.html#contact" class="btn-primary">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Sponsor Checker Section -->
+        <section id="sponsor-checker" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <a href="uk-insider.html" class="back-link">← Back to Hub</a>
+                    <h2>Check a <span class="gradient-text">Sponsor</span></h2>
+                    <p>Verify if a company is licensed to sponsor workers in the UK.</p>
+                    <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 5px;">Data updated: <span
+                            id="data-date">Loading...</span></p>
+                </div>
+
+                <div class="sponsor-search-card glass-card">
+                    <div class="search-box">
+                        <input type="text" id="sponsor-input" placeholder="Enter company name (e.g. Google)...">
+                        <button id="sponsor-btn" class="btn-primary">Search</button>
+                    </div>
+                    <div id="sponsor-results" class="results-list">
+                        <!-- Results injected here -->
+                        <div class="placeholder-text">Enter a name to search the register.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <p>&copy; 2025 Zocially. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js?v=3"></script>
+</body>
+
+</html>

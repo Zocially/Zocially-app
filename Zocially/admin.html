@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Zocially</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .admin-container {
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 2rem;
+        }
+
+        .login-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .deal-list {
+            margin-top: 2rem;
+        }
+
+        .deal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span> <span
+                    style="font-size: 0.8em; opacity: 0.7;">Admin</span></div>
+            <nav>
+                <ul>
+                    <li><a href="finder.html">Deal Finder</a></li>
+                    <li><a href="index.html">Back to Site</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Login Screen -->
+        <div id="login-screen" class="glass-card login-screen">
+            <h2>Admin Access</h2>
+            <p>Enter PIN to manage deals.</p>
+            <input type="password" id="pin-input" placeholder="Enter PIN"
+                style="max-width: 200px; margin: 1rem auto; text-align: center;">
+            <button onclick="checkPin()" class="btn-primary">Login</button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <!-- API Key Settings -->
+            <div class="glass-card" style="margin-bottom: 1rem; padding: 1rem;">
+                <details>
+                    <summary style="cursor: pointer; font-weight: bold; color: var(--primary-color);">⚙️ AI Settings
+                    </summary>
+                    <div style="margin-top: 1rem;">
+                        <label>Google Gemini API Key</label>
+                        <input type="password" id="api-key-input" placeholder="Enter your Gemini API Key"
+                            style="width: 100%; margin-top: 0.5rem;">
+                        <button onclick="saveApiKey()" class="btn-secondary"
+                            style="margin-top: 0.5rem; font-size: 0.8rem;">Save Key</button>
+                    </div>
+                </details>
+            </div>
+
+            <div class="glass-card">
+                <h2>Add New Deal</h2>
+                <form id="add-deal-form">
+                    <div class="form-grid">
+                        <div class="input-group full-width">
+                            <label>Title</label>
+                            <input type="text" id="d-title" required placeholder="e.g. 50% Off ASOS">
+                        </div>
+                        <div class="input-group full-width">
+                            <label>Description
+                                <button type="button" onclick="rewriteWithAI()" class="btn-secondary"
+                                    style="font-size: 0.7rem; padding: 2px 8px; margin-left: 10px;">✨ Rewrite with
+                                    AI</button>
+                            </label>
+                            <textarea id="d-desc" rows="3" placeholder="Paste raw deal info here..."></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label>Price</label>
+                            <input type="text" id="d-price" placeholder="e.g. £10.00">
+                        </div>
+                        <div class="input-group">
+                            <label>Original Price</label>
+                            <input type="text" id="d-orig-price" placeholder="e.g. £20.00">
+                        </div>
+                        <div class="input-group">
+                            <label>Tag</label>
+                            <input type="text" id="d-tag" placeholder="e.g. HOT DEAL">
+                        </div>
+                        <div class="input-group">
+                            <label>Link URL</label>
+                            <input type="url" id="d-link" required placeholder="https://...">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary full-width">Publish Deal</button>
+                </form>
+            </div>
+
+            <div class="deal-list">
+                <h3>Active Deals</h3>
+                <div id="active-deals-list">
+                    <!-- Deals injected here -->
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <div class="deal-list"
+                style="margin-top: 3rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;">
+                <h3>🔔 Price Alerts</h3>
+                <div id="price-alerts-list">
+                    <p>Loading alerts...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // Simple client-side PIN (Not secure, but sufficient for personal use as requested)
+        const ADMIN_PIN = "1234";
+        let currentEditingId = null; // Track which deal is being edited
+
+        function checkPin() {
+            const input = document.getElementById('pin-input').value;
+            if (input === ADMIN_PIN) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadDealsForAdmin();
+                // loadAlertsForAdmin(); // Not implemented yet
+                loadApiKey();
+            } else {
+                alert("Incorrect PIN");
+            }
+        }
+
+        // --- AI Logic ---
+        function loadApiKey() {
+            const key = localStorage.getItem('gemini_api_key');
+            if (key) document.getElementById('api-key-input').value = key;
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('api-key-input').value;
+            localStorage.setItem('gemini_api_key', key);
+            alert("API Key Saved!");
+        }
+
+        async function rewriteWithAI() {
+            const key = localStorage.getItem('gemini_api_key');
+
+            // Check if key is missing or empty
+            if (!key || key.trim() === "") {
+                const userKey = prompt("Please enter your Google Gemini API Key to use this feature:");
+                if (userKey) {
+                    localStorage.setItem('gemini_api_key', userKey);
+                    document.getElementById('api-key-input').value = userKey;
+                    // Retry immediately
+                    return rewriteWithAI();
+                } else {
+                    alert("API Key is required for AI features.");
+                    return;
+                }
+            }
+
+            const title = document.getElementById('d-title').value;
+            const desc = document.getElementById('d-desc').value;
+            const btn = document.querySelector('button[onclick="rewriteWithAI()"]');
+
+            if (!title && !desc) {
+                alert("Please enter some text in Title or Description to rewrite.");
+                return;
+            }
+
+            btn.textContent = "✨ Rewriting...";
+            btn.disabled = true;
+
+            const prompt = `
+                You are a professional copywriter for a deals website. 
+                Rewrite the following deal information to be catchy, concise, and SEO-friendly.
+                
+                Input Title: ${title}
+                Input Description: ${desc}
+                
+                Return ONLY a JSON object with these keys: "title", "description", "tag" (e.g. HOT, LIMITED, 50% OFF).
+                Do not include markdown formatting like \`\`\`json.
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error.message);
+
+                const rawText = data.candidates[0].content.parts[0].text;
+                // Clean up markdown if present
+                const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const result = JSON.parse(jsonText);
+
+                document.getElementById('d-title').value = result.title;
+                document.getElementById('d-desc').value = result.description;
+                document.getElementById('d-tag').value = result.tag;
+
+                alert("✨ Rewritten successfully!");
+
+            } catch (err) {
+                console.error(err);
+                alert("AI Error: " + err.message);
+            } finally {
+                btn.textContent = "✨ Rewrite with AI";
+                btn.disabled = false;
+            }
+        }
+
+        // --- Admin Functionality ---
+        const addDealForm = document.getElementById('add-deal-form');
+        const submitBtn = addDealForm.querySelector('button[type="submit"]');
+
+        addDealForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const dealData = {
+                title: document.getElementById('d-title').value,
+                description: document.getElementById('d-desc').value,
+                price: document.getElementById('d-price').value,
+                original_price: document.getElementById('d-orig-price').value,
+                tag: document.getElementById('d-tag').value,
+                link: document.getElementById('d-link').value
+            };
+
+            try {
+                let error;
+                if (currentEditingId) {
+                    // Update existing deal
+                    const res = await supabase
+                        .from('deals')
+                        .update(dealData)
+                        .eq('id', currentEditingId);
+                    error = res.error;
+                } else {
+                    // Insert new deal
+                    const res = await supabase
+                        .from('deals')
+                        .insert([dealData]);
+                    error = res.error;
+                }
+
+                if (error) throw error;
+
+                alert(currentEditingId ? "Deal Updated!" : "Deal Published!");
+                resetForm();
+                loadDealsForAdmin();
+            } catch (err) {
+                alert("Error saving deal: " + err.message);
+                console.error(err);
+            }
+        });
+
+        function resetForm() {
+            addDealForm.reset();
+            currentEditingId = null;
+            submitBtn.textContent = "Publish Deal";
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-primary');
+        }
+
+        function editDeal(deal) {
+            currentEditingId = deal.id;
+            document.getElementById('d-title').value = deal.title;
+            document.getElementById('d-desc').value = deal.description || '';
+            document.getElementById('d-price').value = deal.price || '';
+            document.getElementById('d-orig-price').value = deal.original_price || '';
+            document.getElementById('d-tag').value = deal.tag || '';
+            document.getElementById('d-link').value = deal.link || '';
+
+            submitBtn.textContent = "Update Deal";
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-secondary'); // Visual cue for edit mode
+
+            // Scroll to form
+            document.querySelector('.admin-container').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function loadDealsForAdmin() {
+            const list = document.getElementById('active-deals-list');
+            list.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const { data, error } = await supabase
+                    .from('deals')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<p>No active deals.</p>';
+                    return;
+                }
+
+                data.forEach(deal => {
+                    const item = document.createElement('div');
+                    item.className = 'deal-item';
+
+                    // Escape JSON for onclick attribute
+                    const dealJson = JSON.stringify(deal).replace(/"/g, '&quot;');
+
+                    item.innerHTML = `
+                        <div>
+                            <strong>${deal.title}</strong><br>
+                            <small>${deal.price} (was ${deal.original_price})</small>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="editDeal(${dealJson})">Edit</button>
+                            <button class="delete-btn" onclick="deleteDeal(${deal.id})">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            } catch (err) {
+                list.innerHTML = '<p style="color:red">Error loading deals.</p>';
+                console.error(err);
+            }
+        }
+
+        async function deleteDeal(id) {
+            if (!confirm("Are you sure you want to delete this deal?")) return;
+
+            try {
+                const { error } = await supabase
+                    .from('deals')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                loadDealsForAdmin();
+            } catch (err) {
+                alert("Error deleting deal: " + err.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

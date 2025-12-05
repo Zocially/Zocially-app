@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace | The UK Insider</title>
+    <meta name="description" content="Exclusive deals and premium services to boost your social presence.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function () {
+            // https://dashboard.emailjs.com/admin/account
+            emailjs.init('rY0pplKAL52RfMgLC');
+        })();
+    </script>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+
+    <header class="glass-header">
+        <div class="container">
+            <div class="logo">Zocially<span class="dot">.</span></div>
+            <button class="mobile-menu-btn" id="mobile-menu-toggle">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="uk-insider.html">The UK Insider</a></li>
+                    <li><a href="marketplace.html" class="active">Marketplace</a></li>
+                    <li><a href="finder.html">Deal Finder</a></li>
+                    <li><a href="index.html#contact" class="btn-primary">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Marketplace Section -->
+        <section id="marketplace" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <a href="uk-insider.html" class="back-link">← Back to Hub</a>
+                    <h2>The Zocially <span class="gradient-text">Marketplace</span></h2>
+                    <p>Exclusive deals and premium services to boost your social presence.</p>
+                </div>
+
+                <!-- Deals Subsection -->
+                <div class="marketplace-subsection">
+                    <h3 class="subsection-title">🔥 Hot Deals</h3>
+                    <div class="deals-grid" id="deals-container">
+                        <!-- Deals injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Services Subsection -->
+                <div class="marketplace-subsection">
+                    <h3 class="subsection-title">🚀 Premium Services</h3>
+                    <div class="services-grid" id="services-container">
+                        <!-- Services injected by JS -->
+                    </div>
+                    <div class="custom-order-note glass-card">
+                        <p>✨ <strong>Need a Custom Package?</strong> We accept custom orders for unique requests! <a
+                                href="index.html#contact" class="text-link">Contact us</a> for a quote.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <p>&copy; 2025 Zocially. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <span class="close-modal">&times;</span>
+            <h3>Place Order</h3>
+            <p id="modal-service-name">Service Name</p>
+            <form id="order-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" min="1" value="1" required style="width: 100px;">
+                </div>
+                <div class="form-group">
+                    <label for="details">Order Details</label>
+                    <textarea id="details" rows="3" placeholder="Additional requirements..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary full-width">Confirm Order</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js?v=3"></script>
+</body>
+
+</html>

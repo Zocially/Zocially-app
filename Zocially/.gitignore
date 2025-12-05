@@ -1,0 +1,5 @@
+.DS_Store
+node_modules/
+sponsors.csv
+update.log
+update_sponsors.sh

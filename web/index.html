@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Hunter AI - UK Insider</title>
+    <link rel="stylesheet" href="/static/style.css?v=5">
+    <!-- Google Fonts: Source Sans Pro -->
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Streamlit Icons (Material Symbols) -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Configuration</h2>
+        <div style="padding: 1rem; background: #d4edda; color: #155724; border-radius: 0.25rem; margin-bottom: 1rem;">
+            API Key Found
+        </div>
+        <button class="btn-secondary full-width" onclick="alert('Reset not implemented in demo')">Reset
+            Configuration</button>
+
+        <div style="margin-top: 2rem;">
+            <button id="test-conn-btn" class="btn-secondary full-width" style="font-size: 0.8rem;">Test Server
+                Connection</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #ddd; margin: 2rem 0;">
+
+
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header>
+            <h1>🚀 Job Hunter AI</h1>
+            <p>Automate your job application process with AI. Upload your CV, provide a job link, and let the magic
+                happen.</p>
+        </header>
+
+        <div class="grid-2-col">
+            <!-- Column 1: Upload -->
+            <div class="col-1">
+                <div class="st-subheader">1. Upload Resume</div>
+                <div class="upload-area" id="drop-zone">
+                    <p>Drag & drop your PDF here</p>
+                    <input type="file" id="cv-upload" accept=".pdf" style="display: block; margin: 10px auto;">
+                </div>
+
+                <div id="cv-status" class="hidden" style="margin-top: 1rem;">
+                    <div style="padding: 1rem; background: #d4edda; color: #155724; border-radius: 0.25rem;">
+                        CV Loaded Successfully!
+                    </div>
+                    <!-- Expander for text -->
+                    <div class="expander" style="margin-top: 1rem;">
+                        <div class="expander-header" onclick="this.parentElement.classList.toggle('open')">
+                            <span>View Extracted Text</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="expander-content">
+                            <pre id="cv-preview-text"
+                                style="white-space: pre-wrap; font-size: 0.8rem; color: #555;"></pre>
+                        </div>
+                    </div>
+
+                    <button id="assess-btn" class="btn-secondary full-width" style="margin-top: 1rem;">Assess
+                        CV</button>
+                    <div id="assessment-result" class="markdown-body" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+
+            <!-- Column 2: Job Details -->
+            <div class="col-2">
+                <div class="st-subheader">2. Job Details</div>
+                <label>Enter Job URL</label>
+                <div class="input-group">
+                    <input type="text" id="job-url" placeholder="https://...">
+                </div>
+                <button id="analyze-btn" class="btn-primary">Analyze Job</button> <!-- Added Analyze button for flow -->
+
+                <div id="job-details-form" class="hidden" style="margin-top: 2rem;">
+                    <div
+                        style="padding: 1rem; background: #d4edda; color: #155724; border-radius: 0.25rem; margin-bottom: 1rem;">
+                        Found Job!
+                    </div>
+
+                    <label>Job Title (editable)</label>
+                    <input type="text" id="job-title">
+
+                    <label>Company (editable)</label>
+                    <input type="text" id="job-company">
+
+                    <label>Edit Job Description (optional)</label>
+                    <textarea id="job-desc" rows="6"></textarea>
+
+                    <label>Job Summary (highlights you want the cover letter to address)</label>
+                    <textarea id="job-summary" rows="3"></textarea>
+
+                    <button id="generate-btn" class="btn-primary full-width" style="margin-top: 1rem;">Generate
+                        Application</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section (Full Width) -->
+        <section id="results-section" class="hidden">
+            <div class="st-tabs">
+                <div class="st-tab active" data-tab="cover-letter">Cover Letter</div>
+                <div class="st-tab" data-tab="tailored-cv">Tailored CV</div>
+                <div class="st-tab" data-tab="actions">Actions</div>
+            </div>
+
+            <div class="tab-content active" id="cover-letter-tab">
+                <div class="st-subheader">Generated Cover Letter</div>
+                <textarea id="cover-letter-output" readonly></textarea>
+                <div class="actions">
+                    <button id="copy-cl-btn" class="btn-secondary">Copy</button>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tailored-cv-tab">
+                <div class="st-subheader">Tailored CV</div>
+                <div id="validation-report" class="alert"></div>
+                <textarea id="cv-output" readonly></textarea>
+                <div class="actions">
+                    <button id="copy-cv-btn" class="btn-secondary">Copy Markdown</button>
+                    <button id="download-docx-btn" class="btn-primary">Download DOCX</button>
+                </div>
+            </div>
+
+            <div class="tab-content" id="actions-tab">
+                <div class="st-subheader">Upload & Track</div>
+                <button id="submit-btn" class="btn-success">Upload to Google Drive & Log</button>
+                <div id="submit-status" style="margin-top: 1rem;"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loader" class="overlay hidden" style="display: none !important;">
+        <div class="loader-content">
+            <div class="modern-spinner">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <p id="loader-text">Processing...</p>
+            <p id="loader-subtext" style="font-size: 0.8rem; opacity: 0.8; margin-top: 5px;">Please wait...</p>
+        </div>
+    </div>
+
+    <!-- Debug Log -->
+    <div id="debug-log" class="hidden"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/script.js?v=4"></script>
+</body>
+
+</html>

@@ -1,0 +1,46 @@
+name: Update Sponsor Data
+
+on:
+  schedule:
+    # Run every day at 9:00 AM UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Dependencies
+      run: |
+        pip install supabase requests
+
+    - name: Download latest CSV
+      run: |
+        curl -L -o sponsors.csv "https://assets.publishing.service.gov.uk/media/692589a7aca6213a492dcfef/2025-11-25_-_Worker_and_Temporary_Worker.csv"
+
+    - name: Sync to Supabase
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: python scripts/sync_supabase.py
+      
+    # Optional: Still generate JSON for backup/fallback
+    - name: Process CSV to JSON (Backup)
+      run: python process_sponsors.py
+
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add sponsors.json metadata.json
+        # Only commit if there are changes
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update sponsor list" && git push)
