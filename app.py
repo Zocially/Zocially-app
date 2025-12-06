@@ -113,7 +113,19 @@ class RateLimiter:
 # Main application UI (original content)
 def main_app():
     # Page Config
-    st.set_page_config(page_title="Job Hunter AI", page_icon="🚀", layout="wide")
+    
+    st.set_page_config(
+        page_title="Job Hunter AI",
+        page_icon="🇬🇧",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+        menu_items={
+            'Get Help': 'https://www.zocially.co.in/contact',
+            'Report a bug': "https://www.zocially.co.in/contact",
+            'About': "# Job Hunter AI by Zocially"
+        }
+    )
+
     
     # Rate Limiter Init
     limiter = RateLimiter()
