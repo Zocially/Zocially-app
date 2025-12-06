@@ -301,10 +301,10 @@ def main_app():
                                         continue
                                     if line.startswith('+'):
                                         # Added line (skip the leading '+')
-                                        highlighted_html += f"<span style='background:#a6f3a6;'>{line[1:]}</span><br>"
+                                        highlighted_html += f"<span style='background:#a6f3a6; color:black;'>{line[1:]}</span><br>"
                                     elif line.startswith('-'):
                                         # Removed line (show with red background and strikethrough)
-                                        highlighted_html += f"<span style='background:#f7c6c7;text-decoration:line-through;'>{line[1:]}</span><br>"
+                                        highlighted_html += f"<span style='background:#f7c6c7; color:black; text-decoration:line-through;'>{line[1:]}</span><br>"
                                     else:
                                         # Unchanged/context line
                                         highlighted_html += f"{line}<br>"
