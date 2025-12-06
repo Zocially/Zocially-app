@@ -130,8 +130,9 @@ def main_app():
 
     
     # Rate Limiter Init
-    limiter = RateLimiter()
-    client_ip = limiter.get_client_ip()
+    # limiter = RateLimiter()
+    # client_ip = limiter.get_client_ip()
+    client_ip = "unknown"
 
     # Initialize Handlers
     def get_handlers():
@@ -149,7 +150,8 @@ def main_app():
             try:
                 gh = GoogleHandler(credentials_file=credentials_path, token_file=token_path)
             except Exception as e:
-                print(f"Google Handler init failed (feature disabled): {e}")
+                # Fail silently for optional feature
+                print(f"Google Drive integration disabled: {e}")
                 gh = None
             
             cv = CVProcessor()
