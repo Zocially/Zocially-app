@@ -15,6 +15,69 @@
     --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
 }
 
+/* Loader Styles */
+.iframe-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.loader-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 12, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    transition: opacity 0.5s ease;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+}
+
+.loader-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.loader-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -711,7 +774,9 @@ select:focus {
     .actions button {
         width: 100%;
     }
-}/* --- Wizard Interface --- */
+}
+
+/* --- Wizard Interface --- */
 .wizard-container {
     max-width: 600px;
     margin: 0 auto;
@@ -1000,7 +1065,9 @@ input:checked+.slider:before {
 
 .breakdown-row.negative {
     color: #f87171;
-}/* Disclaimer */
+}
+
+/* Disclaimer */
 .wizard-disclaimer {
     margin-top: 2rem;
     text-align: center;
@@ -1014,7 +1081,9 @@ input:checked+.slider:before {
 
 .wizard-disclaimer strong {
     color: var(--text-color);
-}/* Marketplace Section */
+}
+
+/* Marketplace Section */
 .marketplace-subsection {
     margin-bottom: 4rem;
 }
@@ -1025,7 +1094,9 @@ input:checked+.slider:before {
     color: var(--text-color);
     border-left: 4px solid var(--primary-color);
     padding-left: 1rem;
-}/* Sponsor Checker */
+}
+
+/* Sponsor Checker */
 .sponsor-search-card {
     max-width: 700px;
     margin: 0 auto;
@@ -1108,7 +1179,9 @@ input:checked+.slider:before {
     background: rgba(250, 204, 21, 0.2);
     color: #facc15;
     border: 1px solid rgba(250, 204, 21, 0.3);
-}/* Hub Page */
+}
+
+/* Hub Page */
 .hub-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
