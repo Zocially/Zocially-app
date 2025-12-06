@@ -12,7 +12,8 @@ class CVProcessor:
         
         genai.configure(api_key=api_key)
         # Switch to 2.0-flash-exp (available and free tier)
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        # Switch to gemini-flash-latest (Explicitly available in user list)
+        self.model = genai.GenerativeModel('gemini-flash-latest')
 
     def extract_text(self, file_path):
         """Extracts text from PDF."""
