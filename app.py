@@ -1,13 +1,14 @@
 
 import streamlit as st
-import difflib
 import os
 import datetime
 from dotenv import load_dotenv
-from google_handler import GoogleHandler
-from cv_processor import CVProcessor
-from job_finder import JobFinder
-from docx_utils import create_docx_from_markdown
+
+# Lazy load custom modules inside main_app or where needed
+# from google_handler import GoogleHandler
+# from cv_processor import CVProcessor
+# from job_finder import JobFinder
+# from docx_utils import create_docx_from_markdown
 
 # Load environment variables
 load_dotenv()
@@ -134,6 +135,11 @@ def main_app():
 
     # Initialize Handlers
     def get_handlers():
+        # Imports here to avoid top-level crashes
+        from google_handler import GoogleHandler
+        from cv_processor import CVProcessor
+        from job_finder import JobFinder
+        
         gh = None
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -300,6 +306,8 @@ def main_app():
                                      st.warning(f"⚠️ CV Validation: {validation_report}")
                                 else:
                                      st.success(f"✅ CV Validation: {validation_report}")
+                                # Part of main_app
+                                import difflib
                                 # Highlight added/changed lines in the tailored CV
                                 diff_lines = difflib.unified_diff(cv_text.splitlines(), new_cv.splitlines(), lineterm='')
                                 highlighted_html = ""
@@ -338,8 +346,9 @@ def main_app():
                                 )
                                 
                                 # Download button for the tailored CV (Word)
+                                from docx_utils import create_docx_from_markdown
                                 docx_filename = f"Tailored_CV_{safe_title}.docx"
-                                cv_processor.generate_docx(new_cv, docx_filename)
+                                create_docx_from_markdown(new_cv, docx_filename)
                                 
                                 with open(docx_filename, "rb") as f:
                                     st.download_button(

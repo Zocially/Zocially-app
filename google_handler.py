@@ -1,10 +1,6 @@
 import os
 import pickle
 import streamlit as st
-from google.oauth2 import service_account
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from googleapiclient.discovery import build
 
 class GoogleHandler:
     SCOPES = [
@@ -13,6 +9,12 @@ class GoogleHandler:
     ]
 
     def __init__(self, credentials_file='credentials.json', token_file='token.pickle'):
+        # Lazy imports to prevent boot crash
+        from google.oauth2 import service_account
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build
+        
         self.creds = None
         
         # 1. Try Streamlit Secrets (Service Account)
