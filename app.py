@@ -285,7 +285,9 @@ def main_app():
                         job_details['summary'] = summary_text
                         
                         # Tabs for results
-                        tab1, tab2, tab3 = st.tabs(["Cover Letter", "Tailored CV", "Actions"])
+                        # Tabs for results
+                        # tab1, tab2, tab3 = st.tabs(["Cover Letter", "Tailored CV", "Actions"])
+                        tab1, tab2 = st.tabs(["Cover Letter", "Tailored CV"])
                         
                         with tab1:
                             st.subheader("Generated Cover Letter")
@@ -375,48 +377,48 @@ def main_app():
                                 if "API key" in str(e):
                                     st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
                         
-                        with tab3:
-                            st.subheader("Upload & Track")
-                            
-                            if google_handler is None:
-                                st.warning("⚠️ Google Drive integration is not configured.")
-                                st.info("To enable this feature, please configure `[gcp_service_account]` in Streamlit Secrets or upload `credentials.json` locally.")
-                            else:
-                                if st.button("Upload to Google Drive & Log"):
-                                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                                    company_name = job_details['company'] if job_details['company'] != "Unknown Company" else "Job"
-                                    
-                                    with st.spinner("Uploading..."):
-                                        cl_link = google_handler.upload_file(cover_letter, f"Cover_Letter_{company_name}_{timestamp}.txt")
-                                        cv_link = google_handler.upload_file(new_cv, f"CV_{company_name}_{timestamp}.txt")
-                                        
-                                        if cl_link and cv_link:
-                                            st.success("Files Uploaded!")
-                                            st.markdown(f"[View Cover Letter]({cl_link})")
-                                            st.markdown(f"[View Tailored CV]({cv_link})")
-                                            
-                                            # Log to Sheets
-                                            spreadsheet_id = os.getenv("SPREADSHEET_ID")
-                                            if not spreadsheet_id:
-                                                spreadsheet_id = google_handler.create_sheet(title="Job Applications Tracker")
-                                                st.info(f"Created new Sheet. ID: {spreadsheet_id}")
-                                            
-                                            job_data = {
-                                                'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-                                                'company': company_name,
-                                                'title': job_details['title'],
-                                                'link': job_details['link'],
-                                                'status': 'Applied',
-                                                'cv_link': cv_link,
-                                                'cover_letter_link': cl_link
-                                            }
-                                            
-                                            if google_handler.log_job(job_data, spreadsheet_id):
-                                                st.success("Logged to Google Sheets!")
-                                            else:
-                                                st.error("Failed to log to Sheets.")
-                                        else:
-                                            st.error("Failed to upload files.")
+                        # with tab3:
+                        #     st.subheader("Upload & Track")
+                        #     
+                        #     if google_handler is None:
+                        #         st.warning("⚠️ Google Drive integration is not configured.")
+                        #         st.info("To enable this feature, please configure `[gcp_service_account]` in Streamlit Secrets or upload `credentials.json` locally.")
+                        #     else:
+                        #         if st.button("Upload to Google Drive & Log"):
+                        #             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                        #             company_name = job_details['company'] if job_details['company'] != "Unknown Company" else "Job"
+                        #             
+                        #             with st.spinner("Uploading..."):
+                        #                 cl_link = google_handler.upload_file(cover_letter, f"Cover_Letter_{company_name}_{timestamp}.txt")
+                        #                 cv_link = google_handler.upload_file(new_cv, f"CV_{company_name}_{timestamp}.txt")
+                        #                 
+                        #                 if cl_link and cv_link:
+                        #                     st.success("Files Uploaded!")
+                        #                     st.markdown(f"[View Cover Letter]({cl_link})")
+                        #                     st.markdown(f"[View Tailored CV]({cv_link})")
+                        #                     
+                        #                     # Log to Sheets
+                        #                     spreadsheet_id = os.getenv("SPREADSHEET_ID")
+                        #                     if not spreadsheet_id:
+                        #                         spreadsheet_id = google_handler.create_sheet(title="Job Applications Tracker")
+                        #                         st.info(f"Created new Sheet. ID: {spreadsheet_id}")
+                        #                     
+                        #                     job_data = {
+                        #                         'date': datetime.datetime.now().strftime("%Y-%m-%d"),
+                        #                         'company': company_name,
+                        #                         'title': job_details['title'],
+                        #                         'link': job_details['link'],
+                        #                         'status': 'Applied',
+                        #                         'cv_link': cv_link,
+                        #                         'cover_letter_link': cl_link
+                        #                     }
+                        #                     
+                        #                     if google_handler.log_job(job_data, spreadsheet_id):
+                        #                         st.success("Logged to Google Sheets!")
+                        #                     else:
+                        #                         st.error("Failed to log to Sheets.")
+                        #                 else:
+                        #                     st.error("Failed to upload files.")
                     else:
                         st.error("Failed to extract job details. Please check the URL.")
 if is_configured():
