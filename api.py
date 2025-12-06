@@ -189,6 +189,17 @@ def main_app():
 
         st.divider()
 
+        # Debug Section
+        with st.expander("Debug Info"):
+            import google.generativeai as genai
+            st.write(f"GenAI Version: {genai.__version__}")
+            if st.button("List Models"):
+                try:
+                     models = [m.name for m in genai.list_models()]
+                     st.write(models)
+                except Exception as e:
+                     st.error(f"Error listing models: {e}")
+
 
     # Main Content
     col1, col2 = st.columns([1, 1])
