@@ -3,12 +3,23 @@
 const mobileBtn = document.getElementById('mobile-menu-toggle');
 const navMenu = document.querySelector('nav ul');
 
+
 if (mobileBtn && navMenu) {
     mobileBtn.addEventListener('click', () => {
         navMenu.classList.toggle('active');
         mobileBtn.textContent = navMenu.classList.contains('active') ? '✕' : '☰';
     });
 }
+
+// Loader Fallback (in case iframe load event misses)
+document.addEventListener('DOMContentLoaded', () => {
+    const loader = document.getElementById('loader');
+    if (loader) {
+        setTimeout(() => {
+            loader.classList.add('hidden');
+        }, 8000); // Force hide after 8 seconds
+    }
+});
 
 
 // Data for Deals (Bundles)
