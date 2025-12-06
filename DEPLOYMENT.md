@@ -36,3 +36,26 @@ To offer a "seamless service" where your users can access both the website and t
 - Your **Backend** runs on Streamlit servers and handles the heavy lifting (AI, PDF processing).
 - Your **Frontend** runs on a fast CDN (Netlify) and shows the beautiful UI.
 - The **Integration** happens via the `iframe` in `job-hunter.html`.
+
+### Step 4: Connect Custom Domain (GoDaddy)
+If you bought your domain on GoDaddy (e.g., `zocially.com`), here is how to link it to your Netlify site.
+
+1.  **In Netlify:**
+    *   Go to **Site configuration** > **Domain management**.
+    *   Click **Add a domain** and enter your domain name (e.g., `zocially.com`).
+    *   Click **Verify**.
+
+2.  **In GoDaddy:**
+    *   Log in and go to your **DNS Management** page for your domain.
+    *   **Add/Edit the A Record (Root Domain):**
+        *   **Type**: `A`
+        *   **Name**: `@`
+        *   **Value**: `75.2.60.5` (This is Netlify's load balancer IP).
+        *   **TTL**: `Default` or `1 Hour`.
+    *   **Add/Edit the CNAME Record (Subdomain):**
+        *   **Type**: `CNAME`
+        *   **Name**: `www`
+        *   **Value**: `zocially-app.netlify.app` (Your Netlify site URL, WITHOUT https://).
+        *   **TTL**: `Default` or `1 Hour`.
+
+3.  **Wait**: DNS changes can take up to 24-48 hours to propagate (spread across the internet), but it usually works within minutes. Netlify will show a green checkmark when it's ready.

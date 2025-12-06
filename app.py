@@ -83,11 +83,10 @@ class RateLimiter:
         conn.close()
 
     def get_client_ip(self):
-        # Try to get IP from Streamlit context (works in some deployments)
+        # Try to get IP from Streamlit context
         try:
-            from streamlit.web.server.websocket_headers import _get_websocket_headers
-            headers = _get_websocket_headers()
-            if headers:
+            if st.context.headers:
+                headers = st.context.headers
                 return headers.get("X-Forwarded-For", headers.get("Remote-Addr", "unknown"))
         except:
             pass

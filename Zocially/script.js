@@ -1,4 +1,15 @@
-console.log("Zocially Script Loaded");
+
+// Mobile Menu Logic
+const mobileBtn = document.getElementById('mobile-menu-toggle');
+const navMenu = document.querySelector('nav ul');
+
+if (mobileBtn && navMenu) {
+    mobileBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        mobileBtn.textContent = navMenu.classList.contains('active') ? '✕' : '☰';
+    });
+}
+
 
 // Data for Deals (Bundles)
 const deals = [
