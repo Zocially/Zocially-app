@@ -359,17 +359,17 @@ def main_app():
                                 )
                                 
                                 # Download button for the tailored CV (Word)
+                                # Download button for the tailored CV (Word)
                                 from docx_utils import create_docx_from_markdown
                                 docx_filename = f"Tailored_CV_{safe_title}.docx"
-                                create_docx_from_markdown(new_cv, docx_filename)
+                                docx_stream = create_docx_from_markdown(new_cv)
                                 
-                                with open(docx_filename, "rb") as f:
-                                    st.download_button(
-                                        label="Download Tailored CV (Word)",
-                                        data=f,
-                                        file_name=docx_filename,
-                                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                    )
+                                st.download_button(
+                                    label="Download Tailored CV (Word)",
+                                    data=docx_stream,
+                                    file_name=docx_filename,
+                                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                )
                             except Exception as e:
                                 st.error(f"Error generating tailored CV: {e}")
                                 if "API key" in str(e):
