@@ -9,7 +9,7 @@ class CVProcessor:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     def extract_text(self, file_path):
         """Extracts text from PDF."""
@@ -36,8 +36,7 @@ class CVProcessor:
         response = self.model.generate_content(prompt)
         return response.text
 
-        response = self.model.generate_content(prompt)
-        return response.text
+
 
     def tailor_cv(self, cv_text, job_description):
         """Rewrites the CV to match the job description."""

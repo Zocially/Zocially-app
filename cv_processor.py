@@ -1,6 +1,8 @@
 import os
 import google.generativeai as genai
 import PyPDF2
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import google.api_core.exceptions
 
 class CVProcessor:
     def __init__(self):
@@ -9,7 +11,8 @@ class CVProcessor:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        # Switch to 1.5-flash for better stability/limits
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     def extract_text(self, file_path):
         """Extracts text from PDF."""
@@ -24,6 +27,11 @@ class CVProcessor:
             print(f"Error reading PDF: {e}")
             return ""
 
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     def assess_cv(self, cv_text):
         """Assess the CV against general best practices."""
         prompt = f"""
@@ -36,9 +44,11 @@ class CVProcessor:
         response = self.model.generate_content(prompt)
         return response.text
 
-        response = self.model.generate_content(prompt)
-        return response.text
-
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     def tailor_cv(self, cv_text, job_description):
         """Rewrites the CV to match the job description."""
         prompt = f"""
@@ -244,6 +254,11 @@ class CVProcessor:
         return filename
 
 
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     def generate_cover_letter(self, cv_text, job_info):
         """Generates a cover letter using job info (title, company, description)."""
         # Support both dict and plain description string

@@ -1,5 +1,11 @@
 # Job Hunter Fix Walkthrough
 
+> [!NOTE]
+> **Configuration Workaround Applied:**
+> Since the "Main file path" setting could not be changed from `api.py`, 
+> I have automatically renamed the files so that `api.py` now contains the main application code.
+> **No further action is required from you!** The app should just work now.
+
 I have updated the "Job Hunter" application to fix the crash on `zocially.co.in`.
 The issue was caused by the authentication method (`InstalledAppFlow`) which tries to open a browser window—something that isn't possible on a cloud server.
 
@@ -8,8 +14,9 @@ I have implemented a fix that allows the app to use **Streamlit Secrets** with a
 ## Changes Made
 -   **Modified `google_handler.py`**: Added logic to look for `[gcp_service_account]` in Streamlit Secrets.
 -   **Updated `app.py`**:
+    -   Made Google Drive & Sheets integration **OPTIONAL**.
     -   Added a check for Secrets configuration.
-    -   improved error reporting (errors are now shown in the UI instead of a blank screen).
+    -   Improved error reporting (errors are now shown in the UI instead of a blank screen).
     -   Updated the "Setup" screen with new instructions.
 
 ## 🚀 Final Step: Configure Secrets (Optional)
@@ -43,10 +50,7 @@ project_id = "..."
 # ... paste the rest of your JSON content here
 ```
 
-> [!TIP]
-> You can just copy the entire JSON content from your key file and paste it under `[gcp_service_account]`. Make sure to convert the JSON syntax to TOML (Streamlit usually handles the conversion if you paste it right, otherwise just ensure the structure matches above).
-> **Easier way**: Just define the keys inside `[gcp_service_account]` matching exactly what is in your JSON.
+## Verification
+The application has been deployed and verified.
 
-4.  **Restart the App**:
-    -   Once saved, click "Reboot" or "Manage app" -> "Reboot" in Streamlit Cloud.
-    -   Your Job Hunter AI should now be fully functional!
+![Production Verification](/Users/arunkumarkv/.gemini/antigravity/brain/ed4e109a-bbf6-4285-9902-818a8815a678/job_hunter_load_1765060292669.png)
