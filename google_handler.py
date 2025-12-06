@@ -1,5 +1,7 @@
 import os
 import pickle
+import streamlit as st
+from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -12,21 +14,42 @@ class GoogleHandler:
 
     def __init__(self, credentials_file='credentials.json', token_file='token.pickle'):
         self.creds = None
+        
+        # 1. Try Streamlit Secrets (Service Account)
+        if "gcp_service_account" in st.secrets:
+            try:
+                service_account_info = st.secrets["gcp_service_account"]
+                self.creds = service_account.Credentials.from_service_account_info(
+                    service_account_info, scopes=self.SCOPES
+                )
+                # Build services immediately
+                self.drive_service = build('drive', 'v3', credentials=self.creds)
+                self.sheets_service = build('sheets', 'v4', credentials=self.creds)
+                return
+            except Exception as e:
+                print(f"Failed to load service account from secrets: {e}")
+
+        # 2. Try Local Token (Backward Compatibility)
         if os.path.exists(token_file):
             with open(token_file, 'rb') as token:
                 self.creds = pickle.load(token)
         
+        # 3. Validate/Refresh Local Token or run Flow
         if not self.creds or not self.creds.valid:
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
+                # Flow is only possible in local environment (HEADLESS check)
                 if not os.path.exists(credentials_file):
-                    raise FileNotFoundError(f"Credentials file '{credentials_file}' not found.")
+                     # If we are here, we failed all methods.
+                     # Raise a specific error that the app can catch.
+                     raise FileNotFoundError("Google Credentials not found. Please configure 'gcp_service_account' in Streamlit Secrets or provide 'credentials.json' locally.")
                 
                 flow = InstalledAppFlow.from_client_secrets_file(
                     credentials_file, self.SCOPES)
                 self.creds = flow.run_local_server(port=0)
             
+            # Save token for next run (only if using Flow/User auth)
             with open(token_file, 'wb') as token:
                 pickle.dump(self.creds, token)
 

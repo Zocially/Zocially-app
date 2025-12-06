@@ -14,12 +14,9 @@ load_dotenv()
 
 # Helper to check configuration
 def is_configured() -> bool:
-    """Return True if Gemini API key is present AND (credentials.json OR token.pickle is present)."""
+    """Return True if Gemini API key is present. Google Drive credentials are optional."""
     api_key = os.getenv("GOOGLE_API_KEY")
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    cred_path = os.path.join(base_dir, "credentials.json")
-    token_path = os.path.join(base_dir, "token.pickle")
-    return bool(api_key) and (os.path.exists(cred_path) or os.path.exists(token_path))
+    return bool(api_key)
 
 # Setup screen for first‑time users
 def setup_screen():
@@ -32,16 +29,24 @@ def setup_screen():
     
     st.markdown(
         """
-        **Welcome!** Before you can use the application you need to provide:
-        1. **Google Gemini API Key** – get it from [Google AI Studio](https://aistudio.google.com/).
-        2. **Google Drive & Sheets credentials** – a `credentials.json` file (Optional if you have previously logged in).
+        **Welcome!** It looks like the app is not fully configured.
+        
+        ### Required:
+        1. **Google Gemini API Key**: Get it from [Google AI Studio](https://aistudio.google.com/).
+        
+        ### Optional (for Drive/Sheets integration):
+        - **Local**: Upload `credentials.json`.
+        - **Cloud Deployment**: Configure `[gcp_service_account]` in Streamlit Secrets.
         """
     )
+    
+    st.divider()
+    
     gemini_key = st.text_input("Enter your Google Gemini API Key", type="password")
     
-    label = "Upload `credentials.json` (Google OAuth)"
+    label = "Upload `credentials.json` (Optional - Google OAuth)"
     if has_token:
-        label += " - [Optional: Existing login found]"
+        label += " - [Existing login found]"
     
     cred_file = st.file_uploader(label, type="json")
     
@@ -50,10 +55,6 @@ def setup_screen():
             st.error("Please provide the Gemini API key.")
             return
         
-        if not cred_file and not has_token:
-            st.error("Please upload the credentials.json file.")
-            return
-            
         # Save API key to .env
         from dotenv import set_key
         set_key('.env', 'GOOGLE_API_KEY', gemini_key)
@@ -65,7 +66,7 @@ def setup_screen():
                 f.write(cred_file.getbuffer())
                 
         st.success("Configuration saved! Restarting app…")
-        st.experimental_rerun()
+        st.rerun()
 
 # Rate Limiter Class
 class RateLimiter:
@@ -133,11 +134,18 @@ def main_app():
 
     # Initialize Handlers
     def get_handlers():
+        gh = None
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
             credentials_path = os.path.join(base_dir, 'credentials.json')
             token_path = os.path.join(base_dir, 'token.pickle')
-            gh = GoogleHandler(credentials_file=credentials_path, token_file=token_path)
+            # Try to init Google Handler, but allow failure
+            try:
+                gh = GoogleHandler(credentials_file=credentials_path, token_file=token_path)
+            except Exception as e:
+                print(f"Google Handler init failed (feature disabled): {e}")
+                gh = None
+            
             cv = CVProcessor()
             jf = JobFinder()
             return gh, cv, jf
@@ -347,44 +355,55 @@ def main_app():
                         
                         with tab3:
                             st.subheader("Upload & Track")
-                            if st.button("Upload to Google Drive & Log"):
-                                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                                company_name = job_details['company'] if job_details['company'] != "Unknown Company" else "Job"
-                                
-                                with st.spinner("Uploading..."):
-                                    cl_link = google_handler.upload_file(cover_letter, f"Cover_Letter_{company_name}_{timestamp}.txt")
-                                    cv_link = google_handler.upload_file(new_cv, f"CV_{company_name}_{timestamp}.txt")
+                            
+                            if google_handler is None:
+                                st.warning("⚠️ Google Drive integration is not configured.")
+                                st.info("To enable this feature, please configure `[gcp_service_account]` in Streamlit Secrets or upload `credentials.json` locally.")
+                            else:
+                                if st.button("Upload to Google Drive & Log"):
+                                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                                    company_name = job_details['company'] if job_details['company'] != "Unknown Company" else "Job"
                                     
-                                    if cl_link and cv_link:
-                                        st.success("Files Uploaded!")
-                                        st.markdown(f"[View Cover Letter]({cl_link})")
-                                        st.markdown(f"[View Tailored CV]({cv_link})")
+                                    with st.spinner("Uploading..."):
+                                        cl_link = google_handler.upload_file(cover_letter, f"Cover_Letter_{company_name}_{timestamp}.txt")
+                                        cv_link = google_handler.upload_file(new_cv, f"CV_{company_name}_{timestamp}.txt")
                                         
-                                        # Log to Sheets
-                                        spreadsheet_id = os.getenv("SPREADSHEET_ID")
-                                        if not spreadsheet_id:
-                                            spreadsheet_id = google_handler.create_sheet(title="Job Applications Tracker")
-                                            st.info(f"Created new Sheet. ID: {spreadsheet_id}")
-                                        
-                                        job_data = {
-                                            'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-                                            'company': company_name,
-                                            'title': job_details['title'],
-                                            'link': job_details['link'],
-                                            'status': 'Applied',
-                                            'cv_link': cv_link,
-                                            'cover_letter_link': cl_link
-                                        }
-                                        
-                                        if google_handler.log_job(job_data, spreadsheet_id):
-                                            st.success("Logged to Google Sheets!")
+                                        if cl_link and cv_link:
+                                            st.success("Files Uploaded!")
+                                            st.markdown(f"[View Cover Letter]({cl_link})")
+                                            st.markdown(f"[View Tailored CV]({cv_link})")
+                                            
+                                            # Log to Sheets
+                                            spreadsheet_id = os.getenv("SPREADSHEET_ID")
+                                            if not spreadsheet_id:
+                                                spreadsheet_id = google_handler.create_sheet(title="Job Applications Tracker")
+                                                st.info(f"Created new Sheet. ID: {spreadsheet_id}")
+                                            
+                                            job_data = {
+                                                'date': datetime.datetime.now().strftime("%Y-%m-%d"),
+                                                'company': company_name,
+                                                'title': job_details['title'],
+                                                'link': job_details['link'],
+                                                'status': 'Applied',
+                                                'cv_link': cv_link,
+                                                'cover_letter_link': cl_link
+                                            }
+                                            
+                                            if google_handler.log_job(job_data, spreadsheet_id):
+                                                st.success("Logged to Google Sheets!")
+                                            else:
+                                                st.error("Failed to log to Sheets.")
                                         else:
-                                            st.error("Failed to log to Sheets.")
-                                    else:
-                                        st.error("Failed to upload files.")
+                                            st.error("Failed to upload files.")
                     else:
                         st.error("Failed to extract job details. Please check the URL.")
 if is_configured():
-    main_app()
+    try:
+        main_app()
+    except Exception as e:
+        st.error("An unexpected error occurred in the application.")
+        st.error(f"Error details: {e}")
+        import traceback
+        st.code(traceback.format_exc())
 else:
     setup_screen()
