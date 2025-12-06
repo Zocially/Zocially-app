@@ -11,8 +11,8 @@ class CVProcessor:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
         
         genai.configure(api_key=api_key)
-        # Switch to 1.5-flash for better stability/limits
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # Switch to 2.0-flash-exp (available and free tier)
+        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
     def extract_text(self, file_path):
         """Extracts text from PDF."""

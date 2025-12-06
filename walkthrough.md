@@ -13,6 +13,11 @@ I have implemented a fix that allows the app to use **Streamlit Secrets** with a
 
 ## Changes Made
 -   **Modified `google_handler.py`**: Added logic to look for `[gcp_service_account]` in Streamlit Secrets.
+-  - **Updated `backup_streamlit_app/cv_processor.py`**:
+    - Changed model from `gemini-2.0-flash` to `gemini-1.5-flash`.
+    - Removed Duplicate code (`assess_cv` had unreachable code).
+- **Updated `requirements.txt`**:
+    - Upgraded `google-generativeai` to `>=0.7.0` to resolve `404 Model not found`.
 -   **Updated `app.py`**:
     -   Made Google Drive & Sheets integration **OPTIONAL**.
     -   Added a check for Secrets configuration.
