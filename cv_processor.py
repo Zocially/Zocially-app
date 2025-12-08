@@ -51,9 +51,9 @@ class CVProcessor:
         wait=wait_exponential(multiplier=1, min=4, max=10)
     )
     def tailor_cv(self, cv_text, job_description):
-        """Rewrites the CV to match the job description."""
+        """Rewrites the CV to match the job description with ATS optimization."""
         prompt = f"""
-        Act as an expert CV writer. Tailor the following CV to match the Job Description provided.
+        Act as an expert CV writer specializing in ATS (Applicant Tracking System) optimization. Tailor the following CV to match the Job Description provided.
         
         **CRITICAL INSTRUCTION ON DATES:**
         You must PRESERVE all dates exactly as they appear in the original CV. 
@@ -61,7 +61,36 @@ class CVProcessor:
         - Do NOT change "2020 - Present" to "2020 - 2023".
         - Keep the exact date strings for every work experience and education entry.
 
-        **Guidelines:**
+        **ATS OPTIMIZATION REQUIREMENTS:**
+        1. **Keyword Matching:**
+           - Extract key skills, technologies, and qualifications from the job description
+           - Naturally incorporate these keywords throughout the CV (especially in Skills and Work Experience)
+           - Match exact terminology used in the job posting (e.g., if they say "JavaScript" don't say "JS")
+           - Include both acronyms and full terms (e.g., "AI (Artificial Intelligence)")
+        
+        2. **Standard Section Headers (ATS-Recognizable):**
+           Use ONLY these exact section headers:
+           - ## Professional Summary (or ## Summary)
+           - ## Skills (or ## Core Competencies)
+           - ## Work Experience (or ## Professional Experience)
+           - ## Education
+           - ## Certifications (if applicable)
+           - ## Projects (if applicable)
+           DO NOT use creative headers like "Career Journey" or "My Expertise"
+        
+        3. **Quantifiable Achievements:**
+           - Include numbers, percentages, and metrics wherever possible
+           - Use action verbs (Led, Developed, Increased, Reduced, Managed, etc.)
+           - Format: "Action Verb + Task + Quantifiable Result"
+           - Example: "Increased sales by 35% through implementation of new CRM system"
+        
+        4. **Skills Section:**
+           - List skills in order of relevance to the job description
+           - Group related skills together (e.g., Programming Languages, Tools, Soft Skills)
+           - Include both hard and soft skills mentioned in the job posting
+           - Use bullet points or comma-separated format (no tables)
+
+        **FORMATTING GUIDELINES (ATS-Friendly):**
         1. **Structure:** Follow this standard professional format:
            - **Header:** Name, Contact Info (Email, Phone, LinkedIn, Location).
            - **Professional Summary:** A strong, tailored summary (3-4 lines) aligning with the job.
@@ -69,14 +98,31 @@ class CVProcessor:
            - **Work Experience:** Reverse chronological order. For each role include **Job Title**, **Company**, **Location**, and **Date Range**.
            - **Education:** Degree, University, Year.
            - **Projects/Certifications:** (If applicable and relevant).
-        2. **Content:** Optimize for ATS (Applicant Tracking Systems) by using keywords from the job description.
+        
+        2. **Content:** 
+           - Use simple, clear language (avoid jargon unless it's in the job description)
+           - Keep bullet points concise (1-2 lines each)
+           - Focus on achievements and impact, not just responsibilities
+        
         3. **Tone:** Professional, confident, and action-oriented.
+        
         4. **Format:** Return ONLY the content of the new CV, formatted in clean Markdown. 
            - Use `##` for section headers (e.g., ## Professional Summary).
            - Use `###` for sub-headers (e.g., ### Software Engineer | Google).
-           - Use `**bold**` for key terms.
-           - Use `*italic*` for less emphatic emphasis if needed.
+           - Use `**bold**` for key terms (job titles, company names, key achievements).
+           - Use `*italic*` sparingly for less emphatic emphasis if needed.
            - Use `-` for bullet points.
+           - DO NOT use tables, text boxes, or complex formatting.
+           - DO NOT include images, graphics, or special characters.
+
+        **ATS COMPATIBILITY CHECKLIST:**
+        - ✓ Use standard fonts (will be converted to Calibri in DOCX)
+        - ✓ Use standard section headers
+        - ✓ Include relevant keywords from job description
+        - ✓ Use simple formatting (no tables, columns, or text boxes)
+        - ✓ Include quantifiable achievements
+        - ✓ Use chronological format
+        - ✓ Spell out acronyms on first use
 
         CV Content:
         {cv_text}
