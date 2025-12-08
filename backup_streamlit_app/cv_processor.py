@@ -258,6 +258,85 @@ class CVProcessor:
         
         response = self.model.generate_content(prompt)
         return response.text
+    
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
+    def improve_cv_for_ats(self, cv_text, validation_report):
+        """
+        Improves a CV to achieve 90+ ATS score based on validation recommendations.
+        """
+        recommendations_text = "\n".join(validation_report.get('recommendations', []))
+        current_score = validation_report.get('score', 0)
+        
+        prompt = f"""
+        Act as an expert ATS optimization specialist. You have a CV that scored {current_score}/100 on ATS compatibility.
+        Your goal is to improve this CV to achieve a score of 90+ (Grade A or B) while preserving all factual information.
+        
+        **CURRENT ISSUES TO FIX:**
+        {recommendations_text}
+        
+        **CRITICAL ATS OPTIMIZATION REQUIREMENTS:**
+        1. **Contact Information (MUST HAVE):**
+           - Add standard phone format if missing: (XXX) XXX-XXXX
+           - Add full LinkedIn URL if missing: https://linkedin.com/in/username
+           - Add location in format: City, State (e.g., "New York, NY")
+        
+        2. **Section Headers (MUST USE EXACT NAMES):**
+           - ## Professional Summary (or ## Summary)
+           - ## Core Competencies (or ## Skills)
+           - ## Professional Experience (or ## Work Experience)
+           - ## Education
+           - ## Certifications (if applicable)
+        
+        3. **Professional Summary (MUST HAVE 3-4 LINES):**
+           - Strong opening statement
+           - Key qualifications and years of experience
+           - Core expertise areas
+           - Career objective or value proposition
+        
+        4. **Skills Section (CRITICAL):**
+           - Group skills by category:
+             * **Technical Skills:** List 5-10 relevant technical skills
+             * **Professional Skills:** List 3-5 soft skills
+           - Use comma-separated format
+           - Include industry-standard terminology
+        
+        5. **Quantifiable Achievements (ADD NUMBERS):**
+           - Every work experience bullet should have metrics when possible
+           - Use percentages, dollar amounts, or quantities
+           - Format: "Action Verb + Task + Quantifiable Result"
+           - Examples: "Increased revenue by 25%", "Managed team of 10", "Reduced costs by $50K"
+        
+        6. **Formatting (STRICT RULES):**
+           - Use ## for main section headers
+           - Use ### for job titles/companies
+           - Use - for bullet points (no indentation)
+           - Use **bold** for job titles and company names
+           - Keep lines under 120 characters
+           - Use Title Case for all section headers
+        
+        7. **Action Verbs (START EVERY BULLET):**
+           Use strong action verbs: Led, Developed, Implemented, Achieved, Managed, Created, 
+           Designed, Improved, Increased, Reduced, Streamlined, Optimized, etc.
+        
+        **INSTRUCTIONS:**
+        - Fix ALL issues mentioned in the recommendations
+        - Ensure EVERY required section is present
+        - Add missing contact information (use placeholder if needed)
+        - Add quantifiable metrics to work experience
+        - Use standard ATS-friendly formatting
+        - Maintain all factual information from original CV
+        - Return ONLY the improved CV in Markdown format
+        
+        **ORIGINAL CV:**
+        {cv_text}
+        """
+        
+        response = self.model.generate_content(prompt)
+        return response.text
 
     def validate_cv(self, cv_text: str) -> str:
         """Simple validation of the generated CV.

@@ -373,6 +373,46 @@ def main_app():
                                         for rec in validation_report['recommendations']:
                                             st.markdown(f"- {rec}")
                                 
+
+                                # Auto-improvement prompt if score < 90
+                                if validation_report['score'] < 90:
+                                    st.markdown("---")
+                                    if st.button("🚀 Auto-Improve CV to Reach Green (90+)", type="primary", key="improve_cv_btn"):
+                                        with st.spinner("Optimizing your CV for ATS..."):
+                                            try:
+                                                improved_cv = cv_processor.improve_cv_for_ats(new_cv, validation_report)
+                                                
+                                                # Re-validate improved CV
+                                                new_validation = cv_processor.validate_ats_compatibility(improved_cv, safe_description)
+                                                
+                                                # Update the CV
+                                                new_cv = improved_cv
+                                                validation_report = new_validation
+                                                
+                                                # Show new score
+                                                st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})")
+                                                
+                                                # Re-display validation report
+                                                with st.expander("📊 Updated CV Quality Report", expanded=True):
+                                                    col_score, col_grade = st.columns(2)
+                                                    with col_score:
+                                                        st.metric("ATS Score", f"{new_validation['score']}/100")
+                                                    with col_grade:
+                                                        grade_color = "🟢" if new_validation['grade'] in ['A', 'B'] else "🟡" if new_validation['grade'] == 'C' else "🔴"
+                                                        st.metric("Grade", f"{grade_color} {new_validation['grade']}")
+                                                    
+                                                    if new_validation['passed']:
+                                                        st.success("✅ CV passed ATS compatibility check!")
+                                                    else:
+                                                        st.warning("⚠️ CV needs improvements for better ATS compatibility")
+                                                    
+                                                    if new_validation['recommendations']:
+                                                        st.markdown("**Remaining Recommendations:**")
+                                                        for rec in new_validation['recommendations']:
+                                                            st.markdown(f"- {rec}")
+                                            except Exception as e:
+                                                st.error(f"Error improving CV: {e}")
+                                
                                 # Original validation (kept for backward compatibility)
                                 old_validation = cv_processor.validate_cv(new_cv)
                                 if "Missing sections" in old_validation:
