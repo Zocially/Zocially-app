@@ -62,33 +62,53 @@ class CVProcessor:
         - Keep the exact date strings for every work experience and education entry.
 
         **ATS OPTIMIZATION REQUIREMENTS:**
-        1. **Keyword Matching:**
+        1. **Contact Information (Header Section):**
+           - **Phone:** Use standard format: (XXX) XXX-XXXX or XXX-XXX-XXXX
+           - **Email:** Professional email address on its own line or clearly separated
+           - **LinkedIn:** Use full URL (https://linkedin.com/in/username), not shortened links
+           - **Location:** Format as "City, State" or "City, Country" (e.g., "London, UK" or "New York, NY")
+           - Ensure all contact info is on separate lines or separated by " | "
+        
+        2. **Keyword Matching:**
            - Extract key skills, technologies, and qualifications from the job description
            - Naturally incorporate these keywords throughout the CV (especially in Skills and Work Experience)
            - Match exact terminology used in the job posting (e.g., if they say "JavaScript" don't say "JS")
-           - Include both acronyms and full terms (e.g., "AI (Artificial Intelligence)")
+           - Include both acronyms and full terms on FIRST mention (e.g., "Artificial Intelligence (AI)")
+           - Subsequent mentions can use acronym only
         
-        2. **Standard Section Headers (ATS-Recognizable):**
+        3. **Standard Section Headers (ATS-Recognizable):**
            Use ONLY these exact section headers:
            - ## Professional Summary (or ## Summary)
-           - ## Skills (or ## Core Competencies)
+           - ## Core Competencies (or ## Skills or ## Technical Skills)
            - ## Work Experience (or ## Professional Experience)
            - ## Education
            - ## Certifications (if applicable)
            - ## Projects (if applicable)
            DO NOT use creative headers like "Career Journey" or "My Expertise"
         
-        3. **Quantifiable Achievements:**
+        4. **Quantifiable Achievements:**
            - Include numbers, percentages, and metrics wherever possible
-           - Use action verbs (Led, Developed, Increased, Reduced, Managed, etc.)
+           - Use action verbs (Led, Developed, Increased, Reduced, Managed, Implemented, Achieved, etc.)
            - Format: "Action Verb + Task + Quantifiable Result"
            - Example: "Increased sales by 35% through implementation of new CRM system"
         
-        4. **Skills Section:**
-           - List skills in order of relevance to the job description
-           - Group related skills together (e.g., Programming Languages, Tools, Soft Skills)
-           - Include both hard and soft skills mentioned in the job posting
-           - Use bullet points or comma-separated format (no tables)
+        5. **Skills Section (CRITICAL FOR ATS):**
+           - Create a dedicated "Core Competencies" or "Technical Skills" section
+           - List skills in order of relevance to the job description (most important first)
+           - Group related skills with clear labels:
+             * **Programming Languages:** Python, JavaScript, Java
+             * **Frameworks & Tools:** React, Node.js, Docker
+             * **Soft Skills:** Leadership, Communication, Problem-solving
+           - Include skill variations where relevant (e.g., "JavaScript (JS, ES6+)")
+           - Use comma-separated format or bullet points (NO tables)
+           - Include both hard skills (technical) and soft skills mentioned in job posting
+        
+        6. **Date Format Consistency:**
+           - Use consistent format throughout: "Month YYYY - Month YYYY" (e.g., "January 2020 - March 2023")
+           - Alternative acceptable format: "MM/YYYY - MM/YYYY"
+           - Use "Present" for current positions (not "Current" or "Now")
+           - ALWAYS include date ranges for ALL work experience entries
+           - Ensure dates are in reverse chronological order (most recent first)
 
         **FORMATTING GUIDELINES (ATS-Friendly):**
         1. **Structure:** Follow this standard professional format:
@@ -154,6 +174,138 @@ class CVProcessor:
         if missing:
             return "Missing sections: " + ", ".join(missing)
         return "CV looks good – all required sections are present."
+    
+    def validate_ats_compatibility(self, cv_text, job_description=""):
+        """
+        Validates CV for ATS compatibility and returns a detailed report.
+        Returns a dict with 'score', 'passed', and 'recommendations'.
+        """
+        import re
+        
+        score = 0
+        max_score = 100
+        recommendations = []
+        
+        # 1. Check for required sections (20 points)
+        required_sections = ["Professional Summary", "Summary", "Skills", "Core Competencies", 
+                           "Work Experience", "Professional Experience", "Education"]
+        found_sections = []
+        for sec in required_sections:
+            if re.search(rf"##\s*{re.escape(sec)}", cv_text, re.IGNORECASE):
+                found_sections.append(sec)
+        
+        if any(s in found_sections for s in ["Professional Summary", "Summary"]):
+            score += 5
+        else:
+            recommendations.append("❌ Missing 'Professional Summary' section")
+        
+        if any(s in found_sections for s in ["Skills", "Core Competencies"]):
+            score += 5
+        else:
+            recommendations.append("❌ Missing 'Skills' or 'Core Competencies' section")
+        
+        if any(s in found_sections for s in ["Work Experience", "Professional Experience"]):
+            score += 5
+        else:
+            recommendations.append("❌ Missing 'Work Experience' section")
+        
+        if "Education" in found_sections:
+            score += 5
+        else:
+            recommendations.append("❌ Missing 'Education' section")
+        
+        # 2. Check contact information format (20 points)
+        has_email = bool(re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', cv_text))
+        has_phone = bool(re.search(r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', cv_text))
+        has_linkedin = bool(re.search(r'linkedin\.com/in/[\w-]+', cv_text, re.IGNORECASE))
+        
+        if has_email:
+            score += 7
+        else:
+            recommendations.append("❌ No email address found")
+        
+        if has_phone:
+            score += 7
+        else:
+            recommendations.append("⚠️ No phone number found or incorrect format")
+        
+        if has_linkedin:
+            score += 6
+        else:
+            recommendations.append("⚠️ No LinkedIn profile found")
+        
+        # 3. Check for quantifiable achievements (15 points)
+        numbers_count = len(re.findall(r'\d+%|\$\d+|\d+\+', cv_text))
+        if numbers_count >= 5:
+            score += 15
+        elif numbers_count >= 3:
+            score += 10
+            recommendations.append("⚠️ Add more quantifiable achievements (numbers, percentages)")
+        else:
+            score += 5
+            recommendations.append("❌ Very few quantifiable achievements found")
+        
+        # 4. Check for action verbs (10 points)
+        action_verbs = ['Led', 'Developed', 'Managed', 'Implemented', 'Achieved', 'Increased', 
+                       'Reduced', 'Created', 'Designed', 'Improved']
+        verb_count = sum(1 for verb in action_verbs if verb in cv_text)
+        if verb_count >= 5:
+            score += 10
+        elif verb_count >= 3:
+            score += 7
+        else:
+            score += 3
+            recommendations.append("⚠️ Use more action verbs (Led, Developed, Managed, etc.)")
+        
+        # 5. Check for keyword matching if job description provided (20 points)
+        if job_description:
+            # Extract potential keywords (simple approach)
+            job_keywords = set(re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', job_description))
+            job_keywords.update(re.findall(r'\b[A-Z]{2,}\b', job_description))  # Acronyms
+            
+            matched_keywords = [kw for kw in job_keywords if kw in cv_text]
+            match_rate = len(matched_keywords) / max(len(job_keywords), 1)
+            
+            if match_rate >= 0.5:
+                score += 20
+            elif match_rate >= 0.3:
+                score += 15
+                recommendations.append("⚠️ Include more keywords from job description")
+            else:
+                score += 5
+                recommendations.append("❌ Low keyword match with job description")
+        else:
+            score += 10  # Give partial credit if no job description provided
+        
+        # 6. Check file size (text length as proxy) (5 points)
+        if len(cv_text) < 10000:  # Reasonable CV length
+            score += 5
+        else:
+            recommendations.append("⚠️ CV might be too long (keep under 2 pages)")
+        
+        # 7. Check for problematic formatting (10 points)
+        if '|' not in cv_text or cv_text.count('|') < 10:  # Likely no tables
+            score += 5
+        else:
+            recommendations.append("⚠️ Possible table formatting detected (not ATS-friendly)")
+        
+        if not re.search(r'[^\x00-\x7F]', cv_text):  # No special characters
+            score += 5
+        else:
+            recommendations.append("⚠️ Special characters detected (may cause ATS issues)")
+        
+        # Generate final report
+        passed = score >= 70
+        grade = "A" if score >= 90 else "B" if score >= 80 else "C" if score >= 70 else "D" if score >= 60 else "F"
+        
+        report = {
+            "score": score,
+            "grade": grade,
+            "passed": passed,
+            "recommendations": recommendations
+        }
+        
+        return report
 
     def generate_docx(self, cv_text, filename):
         """Converts Markdown CV text to a professionally formatted DOCX file."""

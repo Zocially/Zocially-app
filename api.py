@@ -348,22 +348,32 @@ def main_app():
                                         st.markdown(new_cv)
                                     else:
                                         st.error("Tailored CV generation returned empty result.")
-                                # Prepare filename based on job title
+                                # Prepare ATS-friendly filename: FirstName_LastName_JobTitle_CV
                                 import re
+                                # Extract name from CV (first line after # header)
+                                name_match = re.search(r'^#\s+(.+)$', new_cv, re.MULTILINE)
+                                candidate_name = "Candidate"
+                                if name_match:
+                                    candidate_name = name_match.group(1).strip()
+                                    # Clean name: remove special chars, keep only letters and spaces
+                                    candidate_name = re.sub(r'[^a-zA-Z\s]', '', candidate_name)
+                                    # Convert to FirstName_LastName format
+                                    candidate_name = "_".join(candidate_name.split()[:2])  # First two words
+                                
                                 safe_title = re.sub(r'[^a-zA-Z0-9]', '_', job_details.get('title', 'Job')).strip('_')
+                                filename_base = f"{candidate_name}_{safe_title}_CV"
                                 
                                 # Download button for the tailored CV (Markdown)
                                 st.download_button(
                                     label="Download Tailored CV (Markdown)",
                                     data=new_cv,
-                                    file_name=f"Tailored_CV_{safe_title}.md",
+                                    file_name=f"{filename_base}.md",
                                     mime="text/markdown"
                                 )
                                 
                                 # Download button for the tailored CV (Word)
-                                # Download button for the tailored CV (Word)
                                 from docx_utils import create_docx_from_markdown
-                                docx_filename = f"Tailored_CV_{safe_title}.docx"
+                                docx_filename = f"{filename_base}.docx"
                                 docx_stream = create_docx_from_markdown(new_cv)
                                 
                                 st.download_button(
