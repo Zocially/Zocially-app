@@ -240,6 +240,38 @@ def main_app():
                         if "API key" in str(e):
                             st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
 
+                        # Check for CV gaps and offer to fill them
+                        gaps = cv_processor.identify_cv_gaps(cv_text)
+                        if gaps['has_gaps']:
+                            with st.expander("📝 Improve Your CV - Fill in Missing Information (Optional)", expanded=True):
+                                st.info("We noticed some information that could strengthen your CV. Fill in what you'd like to add:")
+                                
+                                # Create form for gap filling
+                                with st.form("gap_filling_form"):
+                                    additional_info = {}
+                                    
+                                    for element in gaps['missing_elements']:
+                                        prompt_text = gaps['prompts'][element]
+                                        
+                                        if element == 'summary':
+                                            additional_info[element] = st.text_area(prompt_text, height=100)
+                                        elif element == 'achievements':
+                                            additional_info[element] = st.text_area(prompt_text, height=80)
+                                        elif element == 'skills':
+                                            additional_info[element] = st.text_input(prompt_text)
+                                        else:
+                                            additional_info[element] = st.text_input(prompt_text)
+                                    
+                                    submitted = st.form_submit_button("Save Additional Information")
+                                    if submitted:
+                                        # Store in session state
+                                        st.session_state['additional_cv_info'] = {k: v for k, v in additional_info.items() if v}
+                                        if st.session_state['additional_cv_info']:
+                                            st.success(f"✅ Saved {len(st.session_state['additional_cv_info'])} additional details!")
+                                        else:
+                                            st.info("No additional information provided.")
+
+
     with col2:
         st.subheader("2. Job Details")
         job_url = st.text_input("Enter Job URL")
@@ -315,7 +347,9 @@ def main_app():
                             try:
                                 # Trim description for CV tailoring
                                 safe_description = job_details['description'][:2000]
-                                new_cv = cv_processor.tailor_cv(cv_text, safe_description)
+                                # Get additional info from session state if available
+                                additional_info = st.session_state.get('additional_cv_info', None)
+                                new_cv = cv_processor.tailor_cv(cv_text, safe_description, additional_info)
                                 
                                 # Run ATS validation
                                 validation_report = cv_processor.validate_ats_compatibility(new_cv, safe_description)

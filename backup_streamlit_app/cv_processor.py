@@ -50,8 +50,93 @@ class CVProcessor:
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10)
     )
-    def tailor_cv(self, cv_text, job_description):
-        """Rewrites the CV to match the job description with ATS optimization."""
+    
+    def identify_cv_gaps(self, cv_text):
+        """
+        Identifies missing or weak elements in the CV.
+        Returns a dict with gaps and user-friendly prompts.
+        """
+        import re
+        
+        gaps = {
+            'has_gaps': False,
+            'missing_elements': [],
+            'prompts': {}
+        }
+        
+        # Check for phone number
+        has_phone = bool(re.search(r'\(?\d{3}\)?[-\.\s]?\d{3}[-\.\s]?\d{4}', cv_text))
+        if not has_phone:
+            gaps['missing_elements'].append('phone')
+            gaps['prompts']['phone'] = "📞 Phone Number (e.g., (555) 123-4567)"
+            gaps['has_gaps'] = True
+        
+        # Check for LinkedIn
+        has_linkedin = bool(re.search(r'linkedin\.com/in/[\w-]+', cv_text, re.IGNORECASE))
+        if not has_linkedin:
+            gaps['missing_elements'].append('linkedin')
+            gaps['prompts']['linkedin'] = "🔗 LinkedIn Profile URL (e.g., https://linkedin.com/in/yourname)"
+            gaps['has_gaps'] = True
+        
+        # Check for location
+        has_location = bool(re.search(r'\b[A-Z][a-z]+,\s*[A-Z]{2}\b', cv_text))
+        if not has_location:
+            gaps['missing_elements'].append('location')
+            gaps['prompts']['location'] = "📍 Location (e.g., New York, NY or London, UK)"
+            gaps['has_gaps'] = True
+        
+        # Check for professional summary
+        has_summary = bool(re.search(r'##\s*(Professional\s+)?Summary', cv_text, re.IGNORECASE))
+        summary_text = ""
+        if has_summary:
+            summary_match = re.search(r'##\s*(Professional\s+)?Summary\s*\n(.+?)(?=\n##|\Z)', cv_text, re.IGNORECASE | re.DOTALL)
+            if summary_match:
+                summary_text = summary_match.group(2).strip()
+        
+        if not has_summary or len(summary_text) < 50:
+            gaps['missing_elements'].append('summary')
+            gaps['prompts']['summary'] = "💼 Professional Summary (Brief overview of your career and goals)"
+            gaps['has_gaps'] = True
+        
+        # Check for skills section
+        has_skills = bool(re.search(r'##\s*(Skills|Core\s+Competencies|Technical\s+Skills)', cv_text, re.IGNORECASE))
+        if not has_skills:
+            gaps['missing_elements'].append('skills')
+            gaps['prompts']['skills'] = "🎯 Key Skills (Comma-separated, e.g., Python, Project Management, Communication)"
+            gaps['has_gaps'] = True
+        
+        # Check for quantifiable achievements
+        numbers_count = len(re.findall(r'\d+%|\$\d+|\d+\+', cv_text))
+        if numbers_count < 3:
+            gaps['missing_elements'].append('achievements')
+            gaps['prompts']['achievements'] = "📊 Key Achievements (Include numbers/metrics, e.g., 'Increased sales by 30%')"
+            gaps['has_gaps'] = True
+        
+        return gaps
+
+    def tailor_cv(self, cv_text, job_description, additional_info=None):
+        """
+        
+        # Format additional information if provided
+        additional_info_text = ""
+        if additional_info:
+            additional_info_text = "The user has provided the following additional information to enhance their CV:\n"
+            if additional_info.get('phone'):
+                additional_info_text += f"- Phone: {additional_info['phone']}\n"
+            if additional_info.get('linkedin'):
+                additional_info_text += f"- LinkedIn: {additional_info['linkedin']}\n"
+            if additional_info.get('location'):
+                additional_info_text += f"- Location: {additional_info['location']}\n"
+            if additional_info.get('summary'):
+                additional_info_text += f"- Professional Summary: {additional_info['summary']}\n"
+            if additional_info.get('skills'):
+                additional_info_text += f"- Additional Skills: {additional_info['skills']}\n"
+            if additional_info.get('achievements'):
+                additional_info_text += f"- Key Achievements: {additional_info['achievements']}\n"
+            additional_info_text += "\nPlease incorporate this information naturally into the tailored CV."
+        else:
+            additional_info_text = "No additional information provided."
+        
         prompt = f"""
         Act as an expert CV writer specializing in ATS (Applicant Tracking System) optimization. Tailor the following CV to match the Job Description provided.
         
@@ -170,6 +255,9 @@ class CVProcessor:
         
         Job Description:
         {job_description}
+        
+        **ADDITIONAL INFORMATION PROVIDED BY USER:**
+        {additional_info_text}
         """
         
         response = self.model.generate_content(prompt)
