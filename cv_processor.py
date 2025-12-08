@@ -135,6 +135,27 @@ class CVProcessor:
            - DO NOT use tables, text boxes, or complex formatting.
            - DO NOT include images, graphics, or special characters.
 
+        **SPELLING AND GRAMMAR (CRITICAL):**
+        - **Proofread thoroughly:** Fix ALL spelling, grammar, and punctuation errors
+        - **Common mistakes to avoid:**
+          * Their/There/They're, Your/You're, Its/It's
+          * Affect/Effect, Then/Than
+          * Ensure/Insure, Complement/Compliment
+        - **Grammar rules:**
+          * Use consistent verb tense (past tense for previous roles, present for current)
+          * Ensure subject-verb agreement
+          * Avoid run-on sentences
+          * Use proper punctuation (commas, periods, semicolons)
+        - **Professional language:**
+          * No slang or informal language
+          * No contractions (use "do not" instead of "don't")
+          * Capitalize proper nouns (company names, job titles, locations)
+          * Use active voice, not passive
+        - **Consistency:**
+          * Consistent date formats throughout
+          * Consistent bullet point style
+          * Consistent capitalization in section headers
+
         **ATS COMPATIBILITY CHECKLIST:**
         - ✓ Use standard fonts (will be converted to Calibri in DOCX)
         - ✓ Use standard section headers
