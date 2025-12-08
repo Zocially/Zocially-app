@@ -339,7 +339,10 @@ def main_app():
                                 st.markdown(f"[Open Cover Letter in Browser]({data_url})", unsafe_allow_html=True)
                             except Exception as e:
                                 st.error(f"Error generating cover letter: {e}")
-                                if "API key" in str(e):
+                                error_msg = str(e)
+                                if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
+                                    st.info("💡 **Tip:** The API rate limit was reached. Wait 60 seconds before generating the CV in the next tab.")
+                                elif "API key" in error_msg:
                                     st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
                         
                         with tab2:
@@ -509,9 +512,39 @@ def main_app():
                                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                 )
                             except Exception as e:
-                                st.error(f"Error generating tailored CV: {e}")
-                                if "API key" in str(e):
-                                    st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
+                                error_msg = str(e)
+                                if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
+                                    st.error("⚠️ **Google Gemini API Rate Limit Reached**")
+                                    st.warning("""
+                                    **What happened?**
+                                    The Google Gemini API has reached its rate limit. This is common with the free tier.
+                                    
+                                    **Why does this happen?**
+                                    - Too many CV generations in a short time
+                                    - Daily quota exceeded
+                                    - Multiple users using the same API key
+                                    
+                                    **Solutions:**
+                                    1. ⏰ **Wait 60 seconds** and click "Generate Application" again
+                                    2. ⏳ **Try again in 5-10 minutes** if the issue persists
+                                    3. 🔑 **Upgrade your API key** to paid tier for higher quotas
+                                    4. 📝 **Use your original CV** for now and manually tailor it based on the job description
+                                    
+                                    **Tip:** Space out your CV generations by at least 30-60 seconds to avoid hitting rate limits.
+                                    """)
+                                    
+                                    # Show the original CV and job details so user can work with them
+                                    with st.expander("📄 Your Original CV (Click to view)", expanded=False):
+                                        st.text_area("CV Content", cv_text, height=300)
+                                    
+                                    with st.expander("💼 Job Details (Click to view)", expanded=False):
+                                        st.markdown(f"**Title:** {job_details.get('title', 'N/A')}")
+                                        st.markdown(f"**Company:** {job_details.get('company', 'N/A')}")
+                                        st.text_area("Job Description", job_details.get('description', 'N/A'), height=200)
+                                else:
+                                    st.error(f"Error generating tailored CV: {e}")
+                                    if "API key" in error_msg:
+                                        st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
                         
                         # with tab3:
                         #     st.subheader("Upload & Track")
