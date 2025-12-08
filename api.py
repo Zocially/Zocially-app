@@ -377,8 +377,16 @@ def main_app():
                                 # Auto-improvement prompt if score < 90
                                 if validation_report['score'] < 90:
                                     st.markdown("---")
+                                    
+                                    # Use session state to track improvement request
+                                    if 'improve_requested' not in st.session_state:
+                                        st.session_state['improve_requested'] = False
+                                    
                                     if st.button("🚀 Auto-Improve CV to Reach Green (90+)", type="primary", key="improve_cv_btn"):
-                                        with st.spinner("Optimizing your CV for ATS..."):
+                                        st.session_state['improve_requested'] = True
+                                    
+                                    if st.session_state.get('improve_requested', False):
+                                        with st.spinner("Optimizing your CV for ATS... This may take 10-15 seconds..."):
                                             try:
                                                 improved_cv = cv_processor.improve_cv_for_ats(new_cv, validation_report)
                                                 
@@ -389,8 +397,11 @@ def main_app():
                                                 new_cv = improved_cv
                                                 validation_report = new_validation
                                                 
+                                                # Reset improvement flag
+                                                st.session_state['improve_requested'] = False
+                                                
                                                 # Show new score
-                                                st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})")
+                                                st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})") 
                                                 
                                                 # Re-display validation report
                                                 with st.expander("📊 Updated CV Quality Report", expanded=True):
@@ -404,14 +415,31 @@ def main_app():
                                                     if new_validation['passed']:
                                                         st.success("✅ CV passed ATS compatibility check!")
                                                     else:
-                                                        st.warning("⚠️ CV needs improvements for better ATS compatibility")
+                                                        st.warning("⚠️ CV still needs some improvements")
                                                     
                                                     if new_validation['recommendations']:
                                                         st.markdown("**Remaining Recommendations:**")
                                                         for rec in new_validation['recommendations']:
                                                             st.markdown(f"- {rec}")
                                             except Exception as e:
-                                                st.error(f"Error improving CV: {e}")
+                                                st.session_state['improve_requested'] = False
+                                                error_msg = str(e)
+                                                if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
+                                                    st.error("⚠️ **API Rate Limit Reached**")
+                                                    st.warning("""
+                                                    The Google Gemini API has reached its rate limit. This can happen when:
+                                                    - Too many requests in a short time
+                                                    - Daily quota exceeded
+                                                    
+                                                    **Solutions:**
+                                                    1. Wait 60 seconds and try again
+                                                    2. Try again in a few minutes
+                                                    3. If using free tier, consider upgrading your API key
+                                                    
+                                                    Your CV is already generated above - you can download it now and manually improve based on the recommendations shown.
+                                                    """)
+                                                else:
+                                                    st.error(f"Error improving CV: {e}")
                                 
                                 # Original validation (kept for backward compatibility)
                                 old_validation = cv_processor.validate_cv(new_cv)
