@@ -44,12 +44,6 @@ class CVProcessor:
         """
         response = self.model.generate_content(prompt)
         return response.text
-
-    @retry(
-        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
     
     def identify_cv_gaps(self, cv_text):
         """
@@ -114,28 +108,32 @@ class CVProcessor:
         
         return gaps
 
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     def tailor_cv(self, cv_text, job_description, additional_info=None):
-        """
+        """Rewrites the CV to match the job description with ATS optimization."""
         
         # Format additional information if provided
         additional_info_text = ""
         if additional_info:
-            additional_info_text = "The user has provided the following additional information to enhance their CV:\n"
+            additional_info_text = "\\n\\n**ADDITIONAL INFORMATION PROVIDED BY USER:**\\n"
+            additional_info_text += "The user has provided the following additional information to enhance their CV:\\n"
             if additional_info.get('phone'):
-                additional_info_text += f"- Phone: {additional_info['phone']}\n"
+                additional_info_text += f"- Phone: {additional_info['phone']}\\n"
             if additional_info.get('linkedin'):
-                additional_info_text += f"- LinkedIn: {additional_info['linkedin']}\n"
+                additional_info_text += f"- LinkedIn: {additional_info['linkedin']}\\n"
             if additional_info.get('location'):
-                additional_info_text += f"- Location: {additional_info['location']}\n"
+                additional_info_text += f"- Location: {additional_info['location']}\\n"
             if additional_info.get('summary'):
-                additional_info_text += f"- Professional Summary: {additional_info['summary']}\n"
+                additional_info_text += f"- Professional Summary: {additional_info['summary']}\\n"
             if additional_info.get('skills'):
-                additional_info_text += f"- Additional Skills: {additional_info['skills']}\n"
+                additional_info_text += f"- Additional Skills: {additional_info['skills']}\\n"
             if additional_info.get('achievements'):
-                additional_info_text += f"- Key Achievements: {additional_info['achievements']}\n"
-            additional_info_text += "\nPlease incorporate this information naturally into the tailored CV."
-        else:
-            additional_info_text = "No additional information provided."
+                additional_info_text += f"- Key Achievements: {additional_info['achievements']}\\n"
+            additional_info_text += "\\nPlease incorporate this information naturally into the tailored CV."
         
         prompt = f"""
         Act as an expert CV writer specializing in ATS (Applicant Tracking System) optimization. Tailor the following CV to match the Job Description provided.
@@ -255,8 +253,6 @@ class CVProcessor:
         
         Job Description:
         {job_description}
-        
-        **ADDITIONAL INFORMATION PROVIDED BY USER:**
         {additional_info_text}
         """
         
