@@ -316,9 +316,33 @@ def main_app():
                                 # Trim description for CV tailoring
                                 safe_description = job_details['description'][:2000]
                                 new_cv = cv_processor.tailor_cv(cv_text, safe_description)
-                                validation_report = cv_processor.validate_cv(new_cv)
-                                if "Missing sections" in validation_report:
-                                     st.warning(f"⚠️ CV Validation: {validation_report}")
+                                
+                                # Run ATS validation
+                                validation_report = cv_processor.validate_ats_compatibility(new_cv, safe_description)
+                                
+                                # Display validation report
+                                with st.expander("📊 CV Quality Report", expanded=True):
+                                    col_score, col_grade = st.columns(2)
+                                    with col_score:
+                                        st.metric("ATS Score", f"{validation_report['score']}/100")
+                                    with col_grade:
+                                        grade_color = "🟢" if validation_report['grade'] in ['A', 'B'] else "🟡" if validation_report['grade'] == 'C' else "🔴"
+                                        st.metric("Grade", f"{grade_color} {validation_report['grade']}")
+                                    
+                                    if validation_report['passed']:
+                                        st.success("✅ CV passed ATS compatibility check!")
+                                    else:
+                                        st.warning("⚠️ CV needs improvements for better ATS compatibility")
+                                    
+                                    if validation_report['recommendations']:
+                                        st.markdown("**Recommendations:**")
+                                        for rec in validation_report['recommendations']:
+                                            st.markdown(f"- {rec}")
+                                
+                                # Original validation (kept for backward compatibility)
+                                old_validation = cv_processor.validate_cv(new_cv)
+                                if "Missing sections" in old_validation:
+                                     st.warning(f"⚠️ {old_validation}")
                                 else:
                                      st.success(f"✅ CV Validation: {validation_report}")
                                 # Part of main_app

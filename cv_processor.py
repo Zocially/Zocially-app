@@ -315,6 +315,55 @@ class CVProcessor:
         else:
             recommendations.append("⚠️ Special characters detected (may cause ATS issues)")
         
+        # 8. Check for proper markdown formatting (10 points)
+        # Check for section headers (##)
+        section_headers = re.findall(r'^##\s+.+$', cv_text, re.MULTILINE)
+        if len(section_headers) >= 4:  # At least 4 main sections
+            score += 5
+        else:
+            recommendations.append("❌ Missing proper section headers (use ## for sections)")
+        
+        # Check for consistent bullet points
+        bullet_lines = re.findall(r'^\s*-\s+.+$', cv_text, re.MULTILINE)
+        if bullet_lines:
+            score += 5
+        else:
+            recommendations.append("⚠️ No bullet points found (use - for lists)")
+        
+        # 9. Check for indentation and formatting consistency (5 points)
+        lines = cv_text.split('\n')
+        inconsistent_indent = False
+        for line in lines:
+            if line.startswith('  -') or line.startswith('\t-'):  # Improper indentation
+                inconsistent_indent = True
+                break
+        
+        if not inconsistent_indent:
+            score += 5
+        else:
+            recommendations.append("⚠️ Inconsistent indentation detected")
+        
+        # 10. Check for proper capitalization in headers (5 points)
+        proper_caps = True
+        for header in section_headers:
+            # Remove ## and check if title case or all caps
+            header_text = header.replace('##', '').strip()
+            if not (header_text.istitle() or header_text.isupper()):
+                proper_caps = False
+                break
+        
+        if proper_caps and section_headers:
+            score += 5
+        else:
+            recommendations.append("⚠️ Section headers should use Title Case")
+        
+        # 11. Check for reasonable line lengths (5 points)
+        long_lines = [line for line in lines if len(line) > 120 and not line.startswith('http')]
+        if len(long_lines) < 3:
+            score += 5
+        else:
+            recommendations.append("⚠️ Some lines are too long (keep under 120 characters)")
+        
         # Generate final report
         passed = score >= 70
         grade = "A" if score >= 90 else "B" if score >= 80 else "C" if score >= 70 else "D" if score >= 60 else "F"
