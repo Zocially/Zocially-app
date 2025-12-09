@@ -11,9 +11,21 @@ class CVProcessor:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
         
         genai.configure(api_key=api_key)
+        
+        # Configure safety settings to prevent blocking professional CV content
+        safety_settings = {
+            'HARASSMENT': 'BLOCK_NONE',
+            'HATE_SPEECH': 'BLOCK_NONE',
+            'SEXUALLY_EXPLICIT': 'BLOCK_NONE',
+            'DANGEROUS_CONTENT': 'BLOCK_NONE',
+        }
+        
         # Switch to 2.0-flash-exp (available and free tier)
         # Switch to gemini-flash-latest (Explicitly available in user list)
-        self.model = genai.GenerativeModel('gemini-flash-latest')
+        self.model = genai.GenerativeModel(
+            'gemini-flash-latest',
+            safety_settings=safety_settings
+        )
 
     def extract_text(self, file_path):
         """Extracts text from PDF."""
@@ -256,8 +268,42 @@ class CVProcessor:
         {additional_info_text}
         """
         
-        response = self.model.generate_content(prompt)
-        return response.text
+        try:
+            response = self.model.generate_content(prompt)
+            
+            # Check if response was blocked
+            if not response.parts:
+                # Check finish_reason
+                if hasattr(response, 'candidates') and response.candidates:
+                    finish_reason = response.candidates[0].finish_reason
+                    if finish_reason == 1:  # SAFETY
+                        raise ValueError(
+                            "The AI safety filters blocked the response. This can happen with very long CVs or job descriptions. "
+                            "Try shortening your CV or job description, or try again in a moment."
+                        )
+                    elif finish_reason == 3:  # RECITATION
+                        raise ValueError(
+                            "The response was blocked due to potential copyright issues. "
+                            "Please ensure your CV and job description don't contain copyrighted material."
+                        )
+                    else:
+                        raise ValueError(
+                            f"The AI model couldn't generate a response (finish_reason: {finish_reason}). "
+                            "Please try again or contact support."
+                        )
+                else:
+                    raise ValueError(
+                        "The AI model returned an empty response. This might be due to safety filters or API issues. "
+                        "Please try again in a moment."
+                    )
+            
+            return response.text
+        except Exception as e:
+            # Re-raise with more context if it's not already our custom error
+            if "safety filters" in str(e) or "finish_reason" in str(e):
+                raise
+            else:
+                raise ValueError(f"Error generating tailored CV: {str(e)}")
     
     @retry(
         retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
