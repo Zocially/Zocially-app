@@ -2,8 +2,8 @@ name: Update Sponsor Data
 
 on:
   schedule:
-    # Run every day at 9:00 AM UTC
-    - cron: '0 9 * * *'
+    # Run every 2 days at 9:00 AM UTC
+    - cron: '0 9 */2 * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -25,6 +25,7 @@ jobs:
 
     - name: Download latest CSV
       run: |
+        # Follow redirects to get the latest CSV file
         curl -L -o sponsors.csv "https://assets.publishing.service.gov.uk/media/692589a7aca6213a492dcfef/2025-11-25_-_Worker_and_Temporary_Worker.csv"
 
     - name: Sync to Supabase
