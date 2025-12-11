@@ -14,12 +14,26 @@ class CVProcessor:
         genai.configure(api_key=api_key)
         
         # Configure safety settings to prevent blocking professional CV content
-        safety_settings = {
-            'HARASSMENT': 'BLOCK_NONE',
-            'HATE_SPEECH': 'BLOCK_NONE',
-            'SEXUALLY_EXPLICIT': 'BLOCK_NONE',
-            'DANGEROUS_CONTENT': 'BLOCK_NONE',
-        }
+        from google.generativeai.types import HarmCategory, HarmBlockThreshold
+        
+        safety_settings = [
+            {
+                "category": HarmCategory.HARM_CATEGORY_HARASSMENT,
+                "threshold": HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+                "category": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                "threshold": HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+                "category": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                "threshold": HarmBlockThreshold.BLOCK_NONE,
+            },
+            {
+                "category": HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                "threshold": HarmBlockThreshold.BLOCK_NONE,
+            },
+        ]
         
         # Switch to 2.0-flash-exp (available and free tier)
         # Switch to gemini-flash-latest (Explicitly available in user list)
