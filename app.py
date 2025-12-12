@@ -346,16 +346,39 @@ def main_app():
                                     st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
                         
                         with tab2:
-                            st.subheader("Tailored CV")
+                            # Add regenerate button at the top
+                            col_header, col_reset = st.columns([4, 1])
+                            with col_header:
+                                st.subheader("Tailored CV")
+                            with col_reset:
+                                if st.button("🔄 Regenerate", help="Start fresh and regenerate the CV"):
+                                    st.session_state['tailored_cv'] = None
+                                    st.session_state['cv_validation'] = None
+                                    st.rerun()
+                            
                             try:
                                 # Trim description for CV tailoring
                                 safe_description = job_details['description'][:2000]
                                 # Get additional info from session state if available
                                 additional_info = st.session_state.get('additional_cv_info', None)
-                                new_cv = cv_processor.tailor_cv(cv_text, safe_description, additional_info)
                                 
-                                # Run ATS validation
-                                validation_report = cv_processor.validate_ats_compatibility(new_cv, safe_description)
+                                # Initialize session state for CV if not exists
+                                if 'tailored_cv' not in st.session_state:
+                                    st.session_state['tailored_cv'] = None
+                                    st.session_state['cv_validation'] = None
+                                
+                                # Generate CV only if not already generated
+                                if st.session_state['tailored_cv'] is None:
+                                    with st.spinner("Generating tailored CV..."):
+                                        new_cv = cv_processor.tailor_cv(cv_text, safe_description, additional_info)
+                                        st.session_state['tailored_cv'] = new_cv
+                                        # Run ATS validation
+                                        validation_report = cv_processor.validate_ats_compatibility(new_cv, safe_description)
+                                        st.session_state['cv_validation'] = validation_report
+                                else:
+                                    # Use stored CV and validation
+                                    new_cv = st.session_state['tailored_cv']
+                                    validation_report = st.session_state['cv_validation']
                                 
                                 # Display validation report
                                 with st.expander("📊 CV Quality Report", expanded=True):
@@ -381,14 +404,7 @@ def main_app():
                                 if validation_report['score'] < 90:
                                     st.markdown("---")
                                     
-                                    # Use session state to track improvement request
-                                    if 'improve_requested' not in st.session_state:
-                                        st.session_state['improve_requested'] = False
-                                    
                                     if st.button("🚀 Auto-Improve CV to Reach Green (90+)", type="primary", key="improve_cv_btn"):
-                                        st.session_state['improve_requested'] = True
-                                    
-                                    if st.session_state.get('improve_requested', False):
                                         with st.spinner("Optimizing your CV for ATS... This may take 10-15 seconds..."):
                                             try:
                                                 improved_cv = cv_processor.improve_cv_for_ats(new_cv, validation_report)
@@ -396,36 +412,21 @@ def main_app():
                                                 # Re-validate improved CV
                                                 new_validation = cv_processor.validate_ats_compatibility(improved_cv, safe_description)
                                                 
-                                                # Update the CV
+                                                # Update session state with improved CV
+                                                st.session_state['tailored_cv'] = improved_cv
+                                                st.session_state['cv_validation'] = new_validation
+                                                
+                                                # Update local variables for display
                                                 new_cv = improved_cv
                                                 validation_report = new_validation
                                                 
-                                                # Reset improvement flag
-                                                st.session_state['improve_requested'] = False
+                                                # Show success message
+                                                st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})")
                                                 
-                                                # Show new score
-                                                st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})") 
+                                                # Force rerun to update the display
+                                                st.rerun()
                                                 
-                                                # Re-display validation report
-                                                with st.expander("📊 Updated CV Quality Report", expanded=True):
-                                                    col_score, col_grade = st.columns(2)
-                                                    with col_score:
-                                                        st.metric("ATS Score", f"{new_validation['score']}/100")
-                                                    with col_grade:
-                                                        grade_color = "🟢" if new_validation['grade'] in ['A', 'B'] else "🟡" if new_validation['grade'] == 'C' else "🔴"
-                                                        st.metric("Grade", f"{grade_color} {new_validation['grade']}")
-                                                    
-                                                    if new_validation['passed']:
-                                                        st.success("✅ CV passed ATS compatibility check!")
-                                                    else:
-                                                        st.warning("⚠️ CV still needs some improvements")
-                                                    
-                                                    if new_validation['recommendations']:
-                                                        st.markdown("**Remaining Recommendations:**")
-                                                        for rec in new_validation['recommendations']:
-                                                            st.markdown(f"- {rec}")
                                             except Exception as e:
-                                                st.session_state['improve_requested'] = False
                                                 error_msg = str(e)
                                                 if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
                                                     st.error("⚠️ **API Rate Limit Reached**")
