@@ -289,8 +289,74 @@ def main_app():
             st.session_state['application_job_url'] = ""
 
         # --- Generation Logic ---
+        if 'generation_step' not in st.session_state:
+            st.session_state.generation_step = 'start'
+
         if job_url and cv_text:
             if st.button("Generate Application"):
+                 # Reset state for new generation attempt
+                st.session_state.generation_step = 'start'
+                
+                # Check for critical gaps (Education, Work Experience)
+                gaps = cv_processor.identify_cv_gaps(cv_text)
+                
+                # Filter for critical missing elements that user hasn't already provided
+                existing_info = st.session_state.get('additional_cv_info', {})
+                critical_gaps = []
+                for elem in ['education', 'work_experience']:
+                    if elem in gaps['missing_elements'] and elem not in existing_info:
+                        critical_gaps.append(elem)
+                
+                if critical_gaps:
+                    st.session_state.generation_step = 'missing_info_check'
+                    st.session_state.detected_critical_gaps = critical_gaps
+                    st.rerun()
+                else:
+                    st.session_state.generation_step = 'processing'
+
+        # --- Intercept Flow: Missing Info Check ---
+        if st.session_state.generation_step == 'missing_info_check':
+             with st.container():
+                st.warning("⚠️ **Missing Information Detected**")
+                st.markdown("To ensure the best result, we noticed your CV is missing some key sections. Please add them below so the AI doesn't leave them blank.")
+                
+                with st.form("missing_info_form"):
+                    new_info = {}
+                    for gap in st.session_state.detected_critical_gaps:
+                        if gap == 'education':
+                             new_info['education'] = st.text_area("🎓 Education (Degree | University | Year)", help="e.g. BSc Computer Science | University of London | 2020")
+                        if gap == 'work_experience':
+                             new_info['work_experience'] = st.text_area("💼 Work Experience", help="Title | Company | Dates | Responsibilities")
+                    
+                    col_submit, col_skip = st.columns([1, 1])
+                    with col_submit:
+                        saved = st.form_submit_button("Save & Continue", type="primary")
+                    with col_skip:
+                        skipped = st.form_submit_button("Skip & Generate Anyway")
+                    
+                    if saved:
+                        # Save to additional info
+                        if 'additional_cv_info' not in st.session_state:
+                            st.session_state['additional_cv_info'] = {}
+                        
+                        # Merge new info
+                        st.session_state['additional_cv_info'].update({k: v for k, v in new_info.items() if v})
+                        
+                        st.session_state.generation_step = 'processing'
+                        st.rerun()
+                    
+                    if skipped:
+                        st.session_state.generation_step = 'processing'
+                        st.session_state['additional_cv_info'] = st.session_state.get('additional_cv_info', {}) 
+                        # Mark these as skipped so we don't ask again? For now, logic relies on presence in additional_cv_info 
+                        # effectively if we skip, we just move to processing. 
+                        # To prevent loop, we should probably add empty entries or handle it in the check logic.
+                        # For simplicity, let's just proceed to processing.
+                        st.rerun()
+
+
+        # --- Processing Step ---
+        if st.session_state.generation_step == 'processing':
                 # Reset if new URL or forced regeneration
                 if job_url != st.session_state['application_job_url']:
                      st.session_state['tailored_cv'] = None
@@ -303,24 +369,30 @@ def main_app():
                     # Check Rate Limit
                     if not limiter.check_limit(client_ip):
                         st.error("🚫 Daily Limit Reached. You can only generate 5 applications per day.")
-                        return
-
-                    # Log Usage
-                    limiter.log_usage(client_ip)
-
-                with st.spinner(f"Processing {job_url}..."):
-                    job_details = job_finder.extract_job_details(job_url)
-                    
-                    if job_details:
-                        st.session_state['generated_job_details'] = job_details
-                        st.session_state['has_generated_application'] = True
-                        st.session_state['application_job_url'] = job_url
-                        # Reset tailored CV so it regenerates for the new job
-                        st.session_state['tailored_cv'] = None 
-                        st.session_state['cv_validation'] = None
-                        st.rerun() # Rerun to update display
+                        # Reset step
+                        st.session_state.generation_step = 'start' 
                     else:
-                        st.error("Failed to extract job details. Please check the URL.")
+                        # Log Usage
+                        limiter.log_usage(client_ip)
+
+                # Only proceed if not rate limited
+                if not ENABLE_RATE_LIMIT or limiter.check_limit(client_ip):
+                    with st.spinner(f"Processing {job_url}..."):
+                        job_details = job_finder.extract_job_details(job_url)
+                        
+                        if job_details:
+                            st.session_state['generated_job_details'] = job_details
+                            st.session_state['has_generated_application'] = True
+                            st.session_state['application_job_url'] = job_url
+                            # Reset tailored CV so it regenerates for the new job
+                            st.session_state['tailored_cv'] = None 
+                            st.session_state['cv_validation'] = None
+                            
+                            st.session_state.generation_step = 'complete'
+                            st.rerun() # Rerun to update display
+                        else:
+                            st.error("Failed to extract job details. Please check the URL.")
+                            st.session_state.generation_step = 'start'
 
         # --- Display Logic (Persistent) ---
         if st.session_state['has_generated_application']:

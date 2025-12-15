@@ -125,6 +125,20 @@ class CVProcessor:
             gaps['prompts']['skills'] = "🎯 Key Skills (Comma-separated, e.g., Python, Project Management, Communication)"
             gaps['has_gaps'] = True
         
+        # Check for Work Experience
+        has_work_exp = bool(re.search(r'##\s*(Work\s+Experience|Professional\s+Experience)', cv_text, re.IGNORECASE))
+        if not has_work_exp:
+             gaps['missing_elements'].append('work_experience')
+             gaps['prompts']['work_experience'] = "💼 Work Experience (e.g., Job Title | Company | Dates | Key Responsibilities)"
+             gaps['has_gaps'] = True
+
+        # Check for Education
+        has_education = bool(re.search(r'##\s*Education', cv_text, re.IGNORECASE))
+        if not has_education:
+             gaps['missing_elements'].append('education')
+             gaps['prompts']['education'] = "🎓 Education (e.g., Degree | University | Year)"
+             gaps['has_gaps'] = True
+
         # Check for quantifiable achievements
         numbers_count = len(re.findall(r'\d+%|\$\d+|\d+\+', cv_text))
         if numbers_count < 3:
