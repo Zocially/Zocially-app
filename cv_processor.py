@@ -170,6 +170,11 @@ class CVProcessor:
         - Do NOT change "2020 - Present" to "2020 - 2023".
         - Keep the exact date strings for every work experience and education entry.
 
+        **CRITICAL RULES ON FACTUAL ACCURACY (ZERO HALLUCINATION):**
+        1. **DO NOT INVENT INFORMATION:** You must NOT add any Education, Work Experience, Job Titles, or Companies that are not explicitly present in the original CV.
+        2. **MISSING SECTIONS:** If the original CV does not have an Education section, DO NOT CREATE ONE. It is better to have a missing section than a fake one.
+        3. **ONLY TAILOR EXISTING CONTENT:** You can rephrase responsibilities to match keywords, but you cannot invent new responsibilities or skills that the candidate clearly does not possess based on the text.
+
         **ATS OPTIMIZATION REQUIREMENTS:**
         1. **Contact Information (Header Section):**
            - **Phone:** Use standard format: (XXX) XXX-XXXX or XXX-XXX-XXXX
@@ -190,7 +195,7 @@ class CVProcessor:
            - ## Professional Summary (or ## Summary)
            - ## Core Competencies (or ## Skills or ## Technical Skills)
            - ## Work Experience (or ## Professional Experience)
-           - ## Education
+           - ## Education (ONLY IF present in original CV)
            - ## Certifications (if applicable)
            - ## Projects (if applicable)
            DO NOT use creative headers like "Career Journey" or "My Expertise"

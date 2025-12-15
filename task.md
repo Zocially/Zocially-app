@@ -9,4 +9,7 @@
     - [x] Refactor `app.py` logic to decouple display from generation button
     - [x] Implement persistent session state for job application results
     - [x] Verify fix with browser automation (Local Verification)
-    - [/] Verify fix on production (User Verification pending) <!-- id: 8 -->
+    - [x] Verify fix on production (User Verification pending)
+- [x] Fix CV Hallucination (Education Fabrication)
+    - [x] Update `cv_processor.py` prompt with strict anti-hallucination rules
+    - [x] Verify fix with script `verify_hallucination.py` <!-- id: 8 -->
