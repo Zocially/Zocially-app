@@ -12,4 +12,8 @@
     - [x] Verify fix on production (User Verification pending)
 - [x] Fix CV Hallucination (Education Fabrication)
     - [x] Update `cv_processor.py` prompt with strict anti-hallucination rules
-    - [x] Verify fix with script `verify_hallucination.py` <!-- id: 8 -->
+    - [x] Verify fix with script `verify_hallucination.py`
+- [x] Implement Missing Info Prompt
+    - [x] Update `cv_processor.py` to check for Education/Work Exp gaps
+    - [x] Update `app.py` to intercept generation flow if gaps found
+    - [x] Verify with mock CV script `verify_gaps.py` <!-- id: 8 -->
