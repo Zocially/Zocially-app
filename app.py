@@ -276,8 +276,22 @@ def main_app():
         st.subheader("2. Job Details")
         job_url = st.text_input("Enter Job URL")
         
+        # --- Session State Initialization ---
+        if 'generated_job_details' not in st.session_state:
+            st.session_state['generated_job_details'] = None
+        if 'has_generated_application' not in st.session_state:
+            st.session_state['has_generated_application'] = False
+        if 'application_job_url' not in st.session_state:
+            st.session_state['application_job_url'] = ""
+
+        # --- Generation Logic ---
         if job_url and cv_text:
             if st.button("Generate Application"):
+                # Reset if new URL or forced regeneration
+                if job_url != st.session_state['application_job_url']:
+                     st.session_state['tailored_cv'] = None
+                     st.session_state['cv_validation'] = None
+                
                 # Rate Limiting (Disabled by default - set to True to enable)
                 ENABLE_RATE_LIMIT = False
                 
@@ -294,303 +308,292 @@ def main_app():
                     job_details = job_finder.extract_job_details(job_url)
                     
                     if job_details:
-                        st.success(f"Found Job: {job_details['title']} at {job_details['company']}")
-                        
-                        # Allow user to edit title, company, and description
-                        title = st.text_input("Job Title (editable)", value=job_details.get('title', ''), key="job_title")
-                        company = st.text_input("Company (editable)", value=job_details.get('company', ''), key="job_company")
-                        if 'job_desc' not in st.session_state:
-                            st.session_state.job_desc = job_details.get('description', '')
-                        edited_desc = st.text_area("Edit Job Description (optional)", st.session_state.job_desc, height=200, key="job_desc")
-
-                        
-                        # New textarea for a concise job summary (highlights, key responsibilities)
-                        if 'job_summary' not in st.session_state:
-                            st.session_state.job_summary = ""
-                        summary_text = st.text_area("Job Summary (highlights you want the cover letter to address)", st.session_state.job_summary, height=150, key="job_summary")
-
-                        
-                        # Update job_details dict with edited values and summary
-                        job_details['title'] = title
-                        job_details['company'] = company
-                        job_details['description'] = edited_desc
-                        job_details['summary'] = summary_text
-                        
-                        # Tabs for results
-                        # Tabs for results
-                        # tab1, tab2, tab3 = st.tabs(["Cover Letter", "Tailored CV", "Actions"])
-                        tab1, tab2 = st.tabs(["Cover Letter", "Tailored CV"])
-                        
-                        with tab1:
-                            st.subheader("Generated Cover Letter")
-                            try:
-                                cover_letter = cv_processor.generate_cover_letter(cv_text, job_details)
-                                st.text_area("Cover Letter", cover_letter, height=400)
-                                # Download button for the generated cover letter
-                                st.download_button(
-                                    label="Download Cover Letter",
-                                    data=cover_letter,
-                                    file_name="cover_letter.txt",
-                                    mime="text/plain"
-                                )
-                                # View in browser (data URL)
-                                import urllib.parse
-                                data_url = f"data:text/plain;charset=utf-8,{urllib.parse.quote(cover_letter)}"
-                                st.markdown(f"[Open Cover Letter in Browser]({data_url})", unsafe_allow_html=True)
-                            except Exception as e:
-                                st.error(f"Error generating cover letter: {e}")
-                                error_msg = str(e)
-                                if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
-                                    st.info("💡 **Tip:** The API rate limit was reached. Wait 60 seconds before generating the CV in the next tab.")
-                                elif "API key" in error_msg:
-                                    st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
-                        
-                        with tab2:
-                            # Add regenerate button at the top
-                            col_header, col_reset = st.columns([4, 1])
-                            with col_header:
-                                st.subheader("Tailored CV")
-                            with col_reset:
-                                if st.button("🔄 Regenerate", help="Start fresh and regenerate the CV"):
-                                    st.session_state['tailored_cv'] = None
-                                    st.session_state['cv_validation'] = None
-                                    st.rerun()
-                            
-                            try:
-                                # Trim description for CV tailoring
-                                safe_description = job_details['description'][:2000]
-                                # Get additional info from session state if available
-                                additional_info = st.session_state.get('additional_cv_info', None)
-                                
-                                # Initialize session state for CV if not exists
-                                if 'tailored_cv' not in st.session_state:
-                                    st.session_state['tailored_cv'] = None
-                                    st.session_state['cv_validation'] = None
-                                
-                                # Generate CV only if not already generated
-                                if st.session_state['tailored_cv'] is None:
-                                    with st.spinner("Generating tailored CV..."):
-                                        new_cv = cv_processor.tailor_cv(cv_text, safe_description, additional_info)
-                                        st.session_state['tailored_cv'] = new_cv
-                                        # Run ATS validation
-                                        validation_report = cv_processor.validate_ats_compatibility(new_cv, safe_description)
-                                        st.session_state['cv_validation'] = validation_report
-                                else:
-                                    # Use stored CV and validation
-                                    new_cv = st.session_state['tailored_cv']
-                                    validation_report = st.session_state['cv_validation']
-                                
-                                # Display validation report
-                                with st.expander("📊 CV Quality Report", expanded=True):
-                                    col_score, col_grade = st.columns(2)
-                                    with col_score:
-                                        st.metric("ATS Score", f"{validation_report['score']}/100")
-                                    with col_grade:
-                                        grade_color = "🟢" if validation_report['grade'] in ['A', 'B'] else "🟡" if validation_report['grade'] == 'C' else "🔴"
-                                        st.metric("Grade", f"{grade_color} {validation_report['grade']}")
-                                    
-                                    if validation_report['passed']:
-                                        st.success("✅ CV passed ATS compatibility check!")
-                                    else:
-                                        st.warning("⚠️ CV needs improvements for better ATS compatibility")
-                                    
-                                    if validation_report['recommendations']:
-                                        st.markdown("**Recommendations:**")
-                                        for rec in validation_report['recommendations']:
-                                            st.markdown(f"- {rec}")
-                                
-
-                                # Auto-improvement prompt if score < 90
-                                if validation_report['score'] < 90:
-                                    st.markdown("---")
-                                    
-                                    if st.button("🚀 Auto-Improve CV to Reach Green (90+)", type="primary", key="improve_cv_btn"):
-                                        with st.spinner("Optimizing your CV for ATS... This may take 10-15 seconds..."):
-                                            try:
-                                                improved_cv = cv_processor.improve_cv_for_ats(new_cv, validation_report)
-                                                
-                                                # Re-validate improved CV
-                                                new_validation = cv_processor.validate_ats_compatibility(improved_cv, safe_description)
-                                                
-                                                # Update session state with improved CV
-                                                st.session_state['tailored_cv'] = improved_cv
-                                                st.session_state['cv_validation'] = new_validation
-                                                
-                                                # Update local variables for display
-                                                new_cv = improved_cv
-                                                validation_report = new_validation
-                                                
-                                                # Show success message
-                                                st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})")
-                                                
-                                                # Force rerun to update the display
-                                                st.rerun()
-                                                
-                                            except Exception as e:
-                                                error_msg = str(e)
-                                                if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
-                                                    st.error("⚠️ **API Rate Limit Reached**")
-                                                    st.warning("""
-                                                    The Google Gemini API has reached its rate limit. This can happen when:
-                                                    - Too many requests in a short time
-                                                    - Daily quota exceeded
-                                                    
-                                                    **Solutions:**
-                                                    1. Wait 60 seconds and try again
-                                                    2. Try again in a few minutes
-                                                    3. If using free tier, consider upgrading your API key
-                                                    
-                                                    Your CV is already generated above - you can download it now and manually improve based on the recommendations shown.
-                                                    """)
-                                                else:
-                                                    st.error(f"Error improving CV: {e}")
-                                
-                                # Original validation (kept for backward compatibility)
-                                old_validation = cv_processor.validate_cv(new_cv)
-                                if "Missing sections" in old_validation:
-                                     st.warning(f"⚠️ {old_validation}")
-                                else:
-                                     st.success(f"✅ CV Validation: {validation_report}")
-                                # Part of main_app
-                                import difflib
-                                # Highlight added/changed lines in the tailored CV
-                                diff_lines = difflib.unified_diff(cv_text.splitlines(), new_cv.splitlines(), lineterm='')
-                                highlighted_html = ""
-                                for line in diff_lines:
-                                    # Skip diff metadata lines
-                                    if line.startswith('+++') or line.startswith('---') or line.startswith('@@'):
-                                        continue
-                                    if line.startswith('+'):
-                                        # Added line (skip the leading '+')
-                                        highlighted_html += f"<span style='background:#a6f3a6; color:black;'>{line[1:]}</span><br>"
-                                    elif line.startswith('-'):
-                                        # Removed line (show with red background and strikethrough)
-                                        highlighted_html += f"<span style='background:#f7c6c7; color:black; text-decoration:line-through;'>{line[1:]}</span><br>"
-                                    else:
-                                        # Unchanged/context line
-                                        highlighted_html += f"{line}<br>"
-                                import streamlit.components.v1 as components
-                                if highlighted_html:
-                                    components.html(highlighted_html, height=600, scrolling=True)
-                                else:
-                                    if new_cv and new_cv.strip():
-                                        st.info("No significant changes detected or CV was rewritten completely. Showing tailored CV below:")
-                                        st.markdown(new_cv)
-                                    else:
-                                        st.error("Tailored CV generation returned empty result.")
-                                # Prepare ATS-friendly filename: FirstName_LastName_JobTitle_CV
-                                import re
-                                # Extract name from CV (first line after # header)
-                                name_match = re.search(r'^#\s+(.+)$', new_cv, re.MULTILINE)
-                                candidate_name = "Candidate"
-                                if name_match:
-                                    candidate_name = name_match.group(1).strip()
-                                    # Clean name: remove special chars, keep only letters and spaces
-                                    candidate_name = re.sub(r'[^a-zA-Z\s]', '', candidate_name)
-                                    # Convert to FirstName_LastName format
-                                    candidate_name = "_".join(candidate_name.split()[:2])  # First two words
-                                
-                                safe_title = re.sub(r'[^a-zA-Z0-9]', '_', job_details.get('title', 'Job')).strip('_')
-                                filename_base = f"{candidate_name}_{safe_title}_CV"
-                                
-                                # Download button for the tailored CV (Markdown)
-                                st.download_button(
-                                    label="Download Tailored CV (Markdown)",
-                                    data=new_cv,
-                                    file_name=f"{filename_base}.md",
-                                    mime="text/markdown"
-                                )
-                                
-                                # Download button for the tailored CV (Word)
-                                from docx_utils import create_docx_from_markdown
-                                docx_filename = f"{filename_base}.docx"
-                                docx_stream = create_docx_from_markdown(new_cv)
-                                
-                                st.download_button(
-                                    label="Download Tailored CV (Word)",
-                                    data=docx_stream,
-                                    file_name=docx_filename,
-                                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                )
-                            except Exception as e:
-                                error_msg = str(e)
-                                if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
-                                    st.error("⚠️ **Google Gemini API Rate Limit Reached**")
-                                    st.warning("""
-                                    **What happened?**
-                                    The Google Gemini API has reached its rate limit. This is common with the free tier.
-                                    
-                                    **Why does this happen?**
-                                    - Too many CV generations in a short time
-                                    - Daily quota exceeded
-                                    - Multiple users using the same API key
-                                    
-                                    **Solutions:**
-                                    1. ⏰ **Wait 60 seconds** and click "Generate Application" again
-                                    2. ⏳ **Try again in 5-10 minutes** if the issue persists
-                                    3. 🔑 **Upgrade your API key** to paid tier for higher quotas
-                                    4. 📝 **Use your original CV** for now and manually tailor it based on the job description
-                                    
-                                    **Tip:** Space out your CV generations by at least 30-60 seconds to avoid hitting rate limits.
-                                    """)
-                                    
-                                    # Show the original CV and job details so user can work with them
-                                    with st.expander("📄 Your Original CV (Click to view)", expanded=False):
-                                        st.text_area("CV Content", cv_text, height=300)
-                                    
-                                    with st.expander("💼 Job Details (Click to view)", expanded=False):
-                                        st.markdown(f"**Title:** {job_details.get('title', 'N/A')}")
-                                        st.markdown(f"**Company:** {job_details.get('company', 'N/A')}")
-                                        st.text_area("Job Description", job_details.get('description', 'N/A'), height=200)
-                                else:
-                                    st.error(f"Error generating tailored CV: {e}")
-                                    if "API key" in error_msg:
-                                        st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
-                        
-                        # with tab3:
-                        #     st.subheader("Upload & Track")
-                        #     
-                        #     if google_handler is None:
-                        #         st.warning("⚠️ Google Drive integration is not configured.")
-                        #         st.info("To enable this feature, please configure `[gcp_service_account]` in Streamlit Secrets or upload `credentials.json` locally.")
-                        #     else:
-                        #         if st.button("Upload to Google Drive & Log"):
-                        #             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                        #             company_name = job_details['company'] if job_details['company'] != "Unknown Company" else "Job"
-                        #             
-                        #             with st.spinner("Uploading..."):
-                        #                 cl_link = google_handler.upload_file(cover_letter, f"Cover_Letter_{company_name}_{timestamp}.txt")
-                        #                 cv_link = google_handler.upload_file(new_cv, f"CV_{company_name}_{timestamp}.txt")
-                        #                 
-                        #                 if cl_link and cv_link:
-                        #                     st.success("Files Uploaded!")
-                        #                     st.markdown(f"[View Cover Letter]({cl_link})")
-                        #                     st.markdown(f"[View Tailored CV]({cv_link})")
-                        #                     
-                        #                     # Log to Sheets
-                        #                     spreadsheet_id = os.getenv("SPREADSHEET_ID")
-                        #                     if not spreadsheet_id:
-                        #                         spreadsheet_id = google_handler.create_sheet(title="Job Applications Tracker")
-                        #                         st.info(f"Created new Sheet. ID: {spreadsheet_id}")
-                        #                     
-                        #                     job_data = {
-                        #                         'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-                        #                         'company': company_name,
-                        #                         'title': job_details['title'],
-                        #                         'link': job_details['link'],
-                        #                         'status': 'Applied',
-                        #                         'cv_link': cv_link,
-                        #                         'cover_letter_link': cl_link
-                        #                     }
-                        #                     
-                        #                     if google_handler.log_job(job_data, spreadsheet_id):
-                        #                         st.success("Logged to Google Sheets!")
-                        #                     else:
-                        #                         st.error("Failed to log to Sheets.")
-                        #                 else:
-                        #                     st.error("Failed to upload files.")
+                        st.session_state['generated_job_details'] = job_details
+                        st.session_state['has_generated_application'] = True
+                        st.session_state['application_job_url'] = job_url
+                        # Reset tailored CV so it regenerates for the new job
+                        st.session_state['tailored_cv'] = None 
+                        st.session_state['cv_validation'] = None
+                        st.rerun() # Rerun to update display
                     else:
                         st.error("Failed to extract job details. Please check the URL.")
+
+        # --- Display Logic (Persistent) ---
+        if st.session_state['has_generated_application']:
+            job_details = st.session_state['generated_job_details']
+            
+            st.success(f"Found Job: {job_details['title']} at {job_details['company']}")
+            
+            # Allow user to edit title, company, and description
+            title = st.text_input("Job Title (editable)", value=job_details.get('title', ''), key="job_title")
+            company = st.text_input("Company (editable)", value=job_details.get('company', ''), key="job_company")
+            
+            # Initialize job_desc session state if needed
+            if 'job_desc' not in st.session_state:
+                st.session_state.job_desc = job_details.get('description', '')
+            # If extracting a new job, update the edit box
+            if job_details.get('description') != st.session_state.job_desc and job_url == st.session_state['application_job_url']:
+                 # This check is a bit simplistic, logic assumes if we just extracted, we want to show it. 
+                 # But since we store persistent job_details, we just use that.
+                 pass
+
+            edited_desc = st.text_area("Edit Job Description (optional)", value=job_details.get('description', ''), height=200, key="job_desc_editor")
+
+            
+            # New textarea for a concise job summary (highlights, key responsibilities)
+            if 'job_summary' not in st.session_state:
+                st.session_state.job_summary = ""
+            summary_text = st.text_area("Job Summary (highlights you want the cover letter to address)", value=job_details.get('summary', ''), height=150, key="job_summary_editor")
+
+            
+            # Update job_details dict with edited values and summary - Sync local changes
+            job_details['title'] = title
+            job_details['company'] = company
+            job_details['description'] = edited_desc
+            job_details['summary'] = summary_text
+            
+            # Tabs for results
+            # tab1, tab2, tab3 = st.tabs(["Cover Letter", "Tailored CV", "Actions"])
+            tab1, tab2 = st.tabs(["Cover Letter", "Tailored CV"])
+            
+            with tab1:
+                st.subheader("Generated Cover Letter")
+                try:
+                    # Provide a unique key using job url to avoid caching issues on switching jobs
+                    # But cover generation is fast enough to just re-run or we could cache it too.
+                    # For now, let's cache it in session state as well to be consistent.
+                    if 'cover_letter' not in st.session_state or st.session_state.get('cl_job_url') != job_url:
+                         st.session_state['cover_letter'] = None
+                    
+                    if st.session_state['cover_letter'] is None:
+                        cover_letter = cv_processor.generate_cover_letter(cv_text, job_details)
+                        st.session_state['cover_letter'] = cover_letter
+                        st.session_state['cl_job_url'] = job_url
+                    else:
+                        cover_letter = st.session_state['cover_letter']
+
+                    st.text_area("Cover Letter", cover_letter, height=400, key="cl_output")
+                    
+                    # Download button for the generated cover letter
+                    st.download_button(
+                        label="Download Cover Letter",
+                        data=cover_letter,
+                        file_name="cover_letter.txt",
+                        mime="text/plain"
+                    )
+                    # View in browser (data URL)
+                    import urllib.parse
+                    data_url = f"data:text/plain;charset=utf-8,{urllib.parse.quote(cover_letter)}"
+                    st.markdown(f"[Open Cover Letter in Browser]({data_url})", unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Error generating cover letter: {e}")
+                    error_msg = str(e)
+                    if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
+                        st.info("💡 **Tip:** The API rate limit was reached. Wait 60 seconds before generating the CV in the next tab.")
+                    elif "API key" in error_msg:
+                        st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
+            
+            with tab2:
+                # Add regenerate button at the top
+                col_header, col_reset = st.columns([4, 1])
+                with col_header:
+                    st.subheader("Tailored CV")
+                with col_reset:
+                    if st.button("🔄 Regenerate", help="Start fresh and regenerate the CV"):
+                        st.session_state['tailored_cv'] = None
+                        st.session_state['cv_validation'] = None
+                        st.rerun()
+                
+                try:
+                    # Trim description for CV tailoring
+                    safe_description = job_details['description'][:2000]
+                    # Get additional info from session state if available
+                    additional_info = st.session_state.get('additional_cv_info', None)
+                    
+                    # Initialize session state for CV if not exists
+                    if 'tailored_cv' not in st.session_state:
+                        st.session_state['tailored_cv'] = None
+                        st.session_state['cv_validation'] = None
+                    
+                    # Generate CV only if not already generated
+                    if st.session_state['tailored_cv'] is None:
+                        with st.spinner("Generating tailored CV..."):
+                            new_cv = cv_processor.tailor_cv(cv_text, safe_description, additional_info)
+                            st.session_state['tailored_cv'] = new_cv
+                            # Run ATS validation
+                            validation_report = cv_processor.validate_ats_compatibility(new_cv, safe_description)
+                            st.session_state['cv_validation'] = validation_report
+                    else:
+                        # Use stored CV and validation
+                        new_cv = st.session_state['tailored_cv']
+                        validation_report = st.session_state['cv_validation']
+                    
+                    # Display validation report
+                    with st.expander("📊 CV Quality Report", expanded=True):
+                        col_score, col_grade = st.columns(2)
+                        with col_score:
+                            st.metric("ATS Score", f"{validation_report['score']}/100")
+                        with col_grade:
+                            grade_color = "🟢" if validation_report['grade'] in ['A', 'B'] else "🟡" if validation_report['grade'] == 'C' else "🔴"
+                            st.metric("Grade", f"{grade_color} {validation_report['grade']}")
+                        
+                        if validation_report['passed']:
+                            st.success("✅ CV passed ATS compatibility check!")
+                        else:
+                            st.warning("⚠️ CV needs improvements for better ATS compatibility")
+                        
+                        if validation_report['recommendations']:
+                            st.markdown("**Recommendations:**")
+                            for rec in validation_report['recommendations']:
+                                st.markdown(f"- {rec}")
+                    
+
+                    # Auto-improvement prompt if score < 90
+                    if validation_report['score'] < 90:
+                        st.markdown("---")
+                        
+                        if st.button("🚀 Auto-Improve CV to Reach Green (90+)", type="primary", key="improve_cv_btn"):
+                            with st.spinner("Optimizing your CV for ATS... This may take 10-15 seconds..."):
+                                try:
+                                    improved_cv = cv_processor.improve_cv_for_ats(new_cv, validation_report)
+                                    
+                                    # Re-validate improved CV
+                                    new_validation = cv_processor.validate_ats_compatibility(improved_cv, safe_description)
+                                    
+                                    # Update session state with improved CV
+                                    st.session_state['tailored_cv'] = improved_cv
+                                    st.session_state['cv_validation'] = new_validation
+                                    
+                                    # Update local variables for display
+                                    new_cv = improved_cv
+                                    validation_report = new_validation
+                                    
+                                    # Show success message
+                                    st.success(f"✅ CV Improved! New Score: {new_validation['score']}/100 (Grade {new_validation['grade']})")
+                                    
+                                    # Force rerun to update the display
+                                    st.rerun()
+                                    
+                                except Exception as e:
+                                    error_msg = str(e)
+                                    if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
+                                        st.error("⚠️ **API Rate Limit Reached**")
+                                        st.warning("""
+                                        The Google Gemini API has reached its rate limit. This can happen when:
+                                        - Too many requests in a short time
+                                        - Daily quota exceeded
+                                        
+                                        **Solutions:**
+                                        1. Wait 60 seconds and try again
+                                        2. Try again in a few minutes
+                                        3. If using free tier, consider upgrading your API key
+                                        
+                                        Your CV is already generated above - you can download it now and manually improve based on the recommendations shown.
+                                        """)
+                                    else:
+                                        st.error(f"Error improving CV: {e}")
+                    
+                    # Original validation (kept for backward compatibility)
+                    old_validation = cv_processor.validate_cv(new_cv)
+                    if "Missing sections" in old_validation:
+                            st.warning(f"⚠️ {old_validation}")
+                    else:
+                            st.success(f"✅ CV Validation: {validation_report}")
+                    # Part of main_app
+                    import difflib
+                    # Highlight added/changed lines in the tailored CV
+                    diff_lines = difflib.unified_diff(cv_text.splitlines(), new_cv.splitlines(), lineterm='')
+                    highlighted_html = ""
+                    for line in diff_lines:
+                        # Skip diff metadata lines
+                        if line.startswith('+++') or line.startswith('---') or line.startswith('@@'):
+                            continue
+                        if line.startswith('+'):
+                            # Added line (skip the leading '+')
+                            highlighted_html += f"<span style='background:#a6f3a6; color:black;'>{line[1:]}</span><br>"
+                        elif line.startswith('-'):
+                            # Removed line (show with red background and strikethrough)
+                            highlighted_html += f"<span style='background:#f7c6c7; color:black; text-decoration:line-through;'>{line[1:]}</span><br>"
+                        else:
+                            # Unchanged/context line
+                            highlighted_html += f"{line}<br>"
+                    import streamlit.components.v1 as components
+                    if highlighted_html:
+                        components.html(highlighted_html, height=600, scrolling=True)
+                    else:
+                        if new_cv and new_cv.strip():
+                            st.info("No significant changes detected or CV was rewritten completely. Showing tailored CV below:")
+                            st.markdown(new_cv)
+                        else:
+                            st.error("Tailored CV generation returned empty result.")
+                    # Prepare ATS-friendly filename: FirstName_LastName_JobTitle_CV
+                    import re
+                    # Extract name from CV (first line after # header)
+                    name_match = re.search(r'^#\s+(.+)$', new_cv, re.MULTILINE)
+                    candidate_name = "Candidate"
+                    if name_match:
+                        candidate_name = name_match.group(1).strip()
+                        # Clean name: remove special chars, keep only letters and spaces
+                        candidate_name = re.sub(r'[^a-zA-Z\s]', '', candidate_name)
+                        # Convert to FirstName_LastName format
+                        candidate_name = "_".join(candidate_name.split()[:2])  # First two words
+                    
+                    safe_title = re.sub(r'[^a-zA-Z0-9]', '_', job_details.get('title', 'Job')).strip('_')
+                    filename_base = f"{candidate_name}_{safe_title}_CV"
+                    
+                    # Download button for the tailored CV (Markdown)
+                    st.download_button(
+                        label="Download Tailored CV (Markdown)",
+                        data=new_cv,
+                        file_name=f"{filename_base}.md",
+                        mime="text/markdown"
+                    )
+                    
+                    # Download button for the tailored CV (Word)
+                    from docx_utils import create_docx_from_markdown
+                    docx_filename = f"{filename_base}.docx"
+                    docx_stream = create_docx_from_markdown(new_cv)
+                    
+                    st.download_button(
+                        label="Download Tailored CV (Word)",
+                        data=docx_stream,
+                        file_name=docx_filename,
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    )
+                except Exception as e:
+                    error_msg = str(e)
+                    if "ResourceExhausted" in error_msg or "429" in error_msg or "quota" in error_msg.lower():
+                        st.error("⚠️ **Google Gemini API Rate Limit Reached**")
+                        st.warning("""
+                        **What happened?**
+                        The Google Gemini API has reached its rate limit. This is common with the free tier.
+                        
+                        **Why does this happen?**
+                        - Too many CV generations in a short time
+                        - Daily quota exceeded
+                        - Multiple users using the same API key
+                        
+                        **Solutions:**
+                        1. ⏰ **Wait 60 seconds** and click "Generate Application" again
+                        2. ⏳ **Try again in 5-10 minutes** if the issue persists
+                        3. 🔑 **Upgrade your API key** to paid tier for higher quotas
+                        4. 📝 **Use your original CV** for now and manually tailor it based on the job description
+                        
+                        **Tip:** Space out your CV generations by at least 30-60 seconds to avoid hitting rate limits.
+                        """)
+                        
+                        # Show the original CV and job details so user can work with them
+                        with st.expander("📄 Your Original CV (Click to view)", expanded=False):
+                            st.text_area("CV Content", cv_text, height=300)
+                        
+                        with st.expander("💼 Job Details (Click to view)", expanded=False):
+                            st.markdown(f"**Title:** {job_details.get('title', 'N/A')}")
+                            st.markdown(f"**Company:** {job_details.get('company', 'N/A')}")
+                            st.text_area("Job Description", job_details.get('description', 'N/A'), height=200)
+                    else:
+                        st.error(f"Error generating tailored CV: {e}")
+                        if "API key" in error_msg:
+                            st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
 if is_configured():
     try:
         main_app()
