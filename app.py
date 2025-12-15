@@ -193,6 +193,10 @@ def main_app():
         with st.expander("Debug Info"):
             import google.generativeai as genai
             st.write(f"GenAI Version: {genai.__version__}")
+            
+            st.markdown("### Session State")
+            st.json({k: str(v)[:100] for k, v in st.session_state.items()})
+            
             if st.button("List Models"):
                 try:
                      models = [m.name for m in genai.list_models()]
