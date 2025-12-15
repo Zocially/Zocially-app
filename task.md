@@ -5,7 +5,8 @@
 - [x] Setup Python environment and dependencies <!-- id: 2 -->
 - [/] Implement Google Drive and Sheets integration <!-- id: 3 -->
 - [/] Implement CV Parsing and Assessment <!-- id: 4 -->
-- [/] Implement Job Search / Scraping functionality <!-- id: 5 -->
-- [/] Implement CV Tailoring and Cover Letter Generation <!-- id: 6 -->
-- [/] Create the main workflow script <!-- id: 7 -->
-- [ ] Verify and Test the application <!-- id: 8 -->
+- [/] Implement Job Search- [x] Fix "Auto-Improve CV" interaction (Nested button issue)
+    - [x] Refactor `app.py` logic to decouple display from generation button
+    - [x] Implement persistent session state for job application results
+    - [x] Verify fix with browser automation (Local Verification)
+    - [/] Verify fix on production (User Verification pending) <!-- id: 8 -->
