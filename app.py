@@ -471,7 +471,7 @@ def main_app():
             
             with tab2:
                 # Add regenerate button at the top
-                col_header, col_reset = st.columns([4, 1])
+                col_header, col_reset = st.columns([0.7, 0.3], vertical_alignment="bottom")
                 with col_header:
                     st.subheader("Tailored CV")
                 with col_reset:
