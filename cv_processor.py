@@ -187,8 +187,9 @@ class CVProcessor:
 
         **CRITICAL RULES ON FACTUAL ACCURACY (ZERO HALLUCINATION):**
         1. **DO NOT INVENT INFORMATION:** You must NOT add any Education, Work Experience, Job Titles, or Companies that are not explicitly present in the original CV.
-        2. **MISSING SECTIONS:** If the original CV does not have an Education section, DO NOT CREATE ONE. It is better to have a missing section than a fake one.
-        3. **ONLY TAILOR EXISTING CONTENT:** You can rephrase responsibilities to match keywords, but you cannot invent new responsibilities or skills that the candidate clearly does not possess based on the text.
+        2. **NO PLACEHOLDERS:** If a specific detail (like University Name, Date, or Location) is missing in the original CV, DO NOT insert placeholders like "[University Name]" or "[Date]". Just omit that specific piece of information.
+        3. **MISSING SECTIONS:** If the original CV does not have an Education section, DO NOT CREATE ONE. It is better to have a missing section than a fake one.
+        4. **ONLY TAILOR EXISTING CONTENT:** You can rephrase responsibilities to match keywords, but you cannot invent new responsibilities or skills that the candidate clearly does not possess based on the text.
 
         **ATS OPTIMIZATION REQUIREMENTS:**
         1. **Contact Information (Header Section):**
