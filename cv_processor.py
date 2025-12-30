@@ -126,14 +126,15 @@ class CVProcessor:
             gaps['has_gaps'] = True
         
         # Check for Work Experience
-        has_work_exp = bool(re.search(r'##\s*(Work\s+Experience|Professional\s+Experience)', cv_text, re.IGNORECASE))
+        # Relaxed regex: Look for "Work Experience" or "Professional Experience" on its own line (approx)
+        has_work_exp = bool(re.search(r'(^|\n)\s*(Work\s+Experience|Professional\s+Experience|Employment\s+History)', cv_text, re.IGNORECASE))
         if not has_work_exp:
              gaps['missing_elements'].append('work_experience')
              gaps['prompts']['work_experience'] = "💼 Work Experience (e.g., Job Title | Company | Dates | Key Responsibilities)"
              gaps['has_gaps'] = True
 
         # Check for Education
-        has_education = bool(re.search(r'##\s*Education', cv_text, re.IGNORECASE))
+        has_education = bool(re.search(r'(^|\n)\s*(Education|Academic\s+Background)', cv_text, re.IGNORECASE))
         if not has_education:
              gaps['missing_elements'].append('education')
              gaps['prompts']['education'] = "🎓 Education (e.g., Degree | University | Year)"
