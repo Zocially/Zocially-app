@@ -429,8 +429,7 @@ def main_app():
             job_details['summary'] = summary_text
             
             # Tabs for results
-            # tab1, tab2, tab3 = st.tabs(["Cover Letter", "Tailored CV", "Actions"])
-            tab1, tab2 = st.tabs(["Cover Letter", "Tailored CV"])
+            tab1, tab2, tab3 = st.tabs(["Cover Letter", "Tailored CV", "Interview & Contact"])
             
             with tab1:
                 st.subheader("Generated Cover Letter")
@@ -670,6 +669,56 @@ def main_app():
                         st.error(f"Error generating tailored CV: {e}")
                         if "API key" in error_msg:
                             st.warning("💡 It looks like your API Key might be invalid. Please use the 'Reset Configuration' button in the sidebar to enter a new key.")
+            
+            with tab3:
+                st.header("🎓 Interview Prep & Outreach")
+                
+                col_interview, col_outreach = st.columns(2)
+                
+                with col_interview:
+                    st.subheader("Interview Preparation")
+                    st.info("Get custom questions based on your CV and this specific job.")
+                    if st.button("🤖 Generate Interview Questions", type="primary"):
+                        with st.spinner("Analyzing job description and CV..."):
+                            try:
+                                if 'interview_prep' not in st.session_state or st.session_state.get('ip_job_url') != job_url:
+                                    questions = cv_processor.generate_interview_questions(cv_text, safe_description)
+                                    st.session_state['interview_prep'] = questions
+                                    st.session_state['ip_job_url'] = job_url
+                                else:
+                                    questions = st.session_state['interview_prep']
+                                
+                                st.markdown("### 🎯 likely Interview Questions")
+                                st.markdown(questions)
+                            except Exception as e:
+                                st.error(f"Error generating questions: {e}")
+
+                with col_outreach:
+                    st.subheader("Networking Messages")
+                    st.info("Drafts to send to hiring managers or recruiters.")
+                    if st.button("📧 Generate Outreach Drafts", type="primary"):
+                        with st.spinner("Drafting professional messages..."):
+                            try:
+                                if 'outreach_msgs' not in st.session_state or st.session_state.get('om_job_url') != job_url:
+                                    msgs = cv_processor.generate_outreach_messages(cv_text, safe_description)
+                                    st.session_state['outreach_msgs'] = msgs
+                                    st.session_state['om_job_url'] = job_url
+                                else:
+                                    msgs = st.session_state['outreach_msgs']
+                                
+                                st.markdown("### 📨 Draft Messages")
+                                st.markdown(msgs)
+                            except Exception as e:
+                                st.error(f"Error generating messages: {e}")
+                
+                # If content exists in session state, display it (persistent across reruns)
+                if 'interview_prep' in st.session_state and st.session_state.get('ip_job_url') == job_url:
+                    with st.expander("📝 View Interview Questions", expanded=True):
+                         st.markdown(st.session_state['interview_prep'])
+                
+                if 'outreach_msgs' in st.session_state and st.session_state.get('om_job_url') == job_url:
+                     with st.expander("📨 View Outreach Drafts", expanded=True):
+                         st.markdown(st.session_state['outreach_msgs'])
 if is_configured():
     try:
         main_app()

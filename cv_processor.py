@@ -621,6 +621,62 @@ class CVProcessor:
         
         return report
 
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
+    def generate_interview_questions(self, cv_text, job_description):
+        """Generates interview questions based on CV and Job Description."""
+        prompt = f"""
+        Act as a strict technical hiring manager. Based on the candidate's CV and the Job Description, generate a list of 10 likely interview questions.
+        
+        **requirements:**
+        1. 3 Technical Questions (specific to the skills in the JD and CV)
+        2. 3 Behavioral Questions (STAR method focused)
+        3. 2 "Curveball" or "Cultural Fit" questions
+        4. 2 Questions about specific projects/experiences mentioned in the CV
+        
+        **Output Format:**
+        Markdown list. For each question, provide a quick "Tip" on what a good answer should include.
+        
+        Job Description:
+        {job_description[:2000]}
+        
+        CV Content:
+        {cv_text}
+        """
+        response = self.model.generate_content(prompt)
+        return response.text
+
+    @retry(
+        retry=retry_if_exception_type(google.api_core.exceptions.ResourceExhausted),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
+    def generate_outreach_messages(self, cv_text, job_description):
+        """Generates LinkedIn connection note and Cold Email."""
+        prompt = f"""
+        Act as a career networking expert. Write two outreach messages for the candidate to send to a hiring manager or recruiter for this job.
+        
+        **1. LinkedIn Connection Request (Strictly under 300 characters):**
+        - Professional, polite, and mentions the specific role.
+        - No fluff.
+        
+        **2. Cold Email (Concise):**
+        - Subject Line: Catchy but professional.
+        - Body: Pitch the candidate's top 2 strengths relevant to the job.
+        - Call to Action: Ask for a brief chat.
+        
+        Job Description:
+        {job_description[:1500]}
+        
+        CV Content (Extract name/skills):
+        {cv_text}
+        """
+        response = self.model.generate_content(prompt)
+        return response.text
+
     def generate_docx(self, cv_text, filename):
         """Converts Markdown CV text to a professionally formatted DOCX file."""
         from docx import Document
